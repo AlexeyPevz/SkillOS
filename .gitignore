@@ -123,6 +123,13 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# OS
-.DS_Store
-Thumbs.db
+# Internal
+.ralph/
+*_RALPH.json
+PRD.md
+MVP_SPEC.md
+ARCHITECTURE_*.md
+refactor_plan.md
+task.md
+implementation_plan.md
+walkthrough.md
