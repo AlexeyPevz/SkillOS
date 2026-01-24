@@ -1,0 +1,260 @@
+{
+  "version": "1.2",
+  "common_fields": [
+    "timestamp",
+    "request_id",
+    "event"
+  ],
+  "events": {
+    "request_received": {
+      "required_fields": [
+        "query_hash",
+        "query_length",
+        "token_count"
+      ],
+      "optional_fields": [
+        "query"
+      ]
+    },
+    "routing_candidates": {
+      "required_fields": [
+        "candidates",
+        "routing_latency_ms"
+      ],
+      "optional_fields": [
+        "features"
+      ]
+    },
+    "routing_decision": {
+      "required_fields": [
+        "skill_id",
+        "confidence",
+        "status",
+        "reason"
+      ],
+      "optional_fields": [
+        "alternatives"
+      ]
+    },
+    "budget_check": {
+      "required_fields": [
+        "allowed",
+        "reason",
+        "model",
+        "estimated_cost",
+        "remaining_daily",
+        "remaining_monthly"
+      ],
+      "optional_fields": []
+    },
+    "policy_decision": {
+      "required_fields": [
+        "allowed",
+        "policy_id"
+      ],
+      "optional_fields": [
+        "approval_required",
+        "approval_reason",
+        "risk_score",
+        "risk_level",
+        "approval_status"
+      ]
+    },
+    "permission_decision": {
+      "required_fields": [
+        "allowed",
+        "policy_id",
+        "role",
+        "skill_id",
+        "required_permissions"
+      ],
+      "optional_fields": [
+        "missing_permissions"
+      ]
+    },
+    "execution_result": {
+      "required_fields": [
+        "status",
+        "duration_ms"
+      ],
+      "optional_fields": [
+        "skill_id",
+        "error_class"
+      ]
+    },
+    "skill_selected": {
+      "required_fields": [
+        "skill_id",
+        "confidence",
+        "status"
+      ],
+      "optional_fields": [
+        "alternatives"
+      ]
+    },
+    "no_skill_found": {
+      "required_fields": [
+        "query_hash"
+      ],
+      "optional_fields": []
+    },
+    "feedback_received": {
+      "required_fields": [
+        "expected_skill_id",
+        "correction",
+        "source"
+      ],
+      "optional_fields": [
+        "skill_id"
+      ]
+    },
+    "schedule_due": {
+      "required_fields": [
+        "schedule_id",
+        "skill_id",
+        "due_at",
+        "lag_ms"
+      ],
+      "optional_fields": [
+        "run_at",
+        "retries",
+        "max_retries"
+      ]
+    },
+    "schedule_started": {
+      "required_fields": [
+        "schedule_id",
+        "skill_id",
+        "due_at",
+        "lag_ms"
+      ],
+      "optional_fields": [
+        "run_at",
+        "retries",
+        "max_retries"
+      ]
+    },
+    "schedule_completed": {
+      "required_fields": [
+        "schedule_id",
+        "skill_id",
+        "duration_ms",
+        "status"
+      ],
+      "optional_fields": [
+        "retries",
+        "max_retries"
+      ]
+    },
+    "schedule_failed": {
+      "required_fields": [
+        "schedule_id",
+        "skill_id",
+        "duration_ms",
+        "error_class"
+      ],
+      "optional_fields": [
+        "retries",
+        "max_retries"
+      ]
+    },
+    "job_enqueued": {
+      "required_fields": [
+        "job_id",
+        "skill_id",
+        "status",
+        "max_retries"
+      ],
+      "optional_fields": []
+    },
+    "job_started": {
+      "required_fields": [
+        "job_id",
+        "skill_id",
+        "status",
+        "retries",
+        "max_retries"
+      ],
+      "optional_fields": []
+    },
+    "job_succeeded": {
+      "required_fields": [
+        "job_id",
+        "skill_id",
+        "status",
+        "duration_ms"
+      ],
+      "optional_fields": []
+    },
+    "job_failed": {
+      "required_fields": [
+        "job_id",
+        "skill_id",
+        "status",
+        "error_class",
+        "retries",
+        "max_retries"
+      ],
+      "optional_fields": [
+        "next_run_at",
+        "retrying"
+      ]
+    },
+    "idempotency_skipped": {
+      "required_fields": [
+        "source",
+        "skill_id",
+        "idempotency_key",
+        "expires_at"
+      ],
+      "optional_fields": []
+    },
+    "attachments_ingested": {
+      "required_fields": [
+        "count",
+        "total_bytes",
+        "attachments"
+      ],
+      "optional_fields": []
+    },
+    "integration_call": {
+      "required_fields": [
+        "connector_id",
+        "connector_type",
+        "status",
+        "latency_ms"
+      ],
+      "optional_fields": [
+        "method",
+        "url",
+        "status_code",
+        "operation",
+        "error_class"
+      ]
+    },
+    "composition_step": {
+      "required_fields": [
+        "status",
+        "duration_ms",
+        "skill_id",
+        "step_id",
+        "order"
+      ],
+      "optional_fields": [
+        "group",
+        "error_class"
+      ]
+    },
+    "webhook_received": {
+      "required_fields": [
+        "trigger_id",
+        "skill_id",
+        "status",
+        "status_code"
+      ],
+      "optional_fields": [
+        "reason"
+      ]
+    }
+  }
+}

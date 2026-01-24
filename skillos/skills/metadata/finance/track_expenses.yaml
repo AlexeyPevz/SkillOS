@@ -1,0 +1,10 @@
+id: finance/track_expenses
+name: Track Expenses
+description: Track expenses by category and time period
+version: 0.1.0
+entrypoint: implementations.finance.track_expenses:run
+tags:
+- finance
+- expenses
+- expense
+- tracking

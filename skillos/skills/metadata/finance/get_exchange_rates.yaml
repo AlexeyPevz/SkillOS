@@ -1,0 +1,9 @@
+id: finance/get_exchange_rates
+name: Get Exchange Rates
+description: Fetch current currency exchange rates
+version: 0.1.0
+entrypoint: implementations.finance.get_exchange_rates:run
+tags:
+- finance
+- exchange
+- rate

@@ -1,0 +1,9 @@
+id: zakupki/check_requirements
+name: Check Requirements
+description: Check tender requirements and eligibility criteria
+version: 0.1.0
+entrypoint: implementations.zakupki.check_requirements:run
+tags:
+- zakupki
+- requirements
+- eligibility

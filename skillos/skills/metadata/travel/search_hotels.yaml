@@ -1,0 +1,10 @@
+id: travel/search_hotels
+name: Search Hotels
+description: Search hotels for a trip
+version: 0.1.0
+entrypoint: implementations.travel.search_hotels:run
+tags:
+- travel
+- hotel
+- hotels
+- search

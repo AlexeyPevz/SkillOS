@@ -1,0 +1,1905 @@
+{
+  "meta": {
+    "doc_id": "skillos_prd_ralph",
+    "version": "4.0-ralph-1",
+    "updated": "2026-01-13",
+    "owner": "Product Lead",
+    "status": "draft",
+    "source_docs": [
+      "PRD.md",
+      "MVP_SPEC.md",
+      "ARCHITECTURE_V4.md",
+      "ROADMAP.md",
+      "BACKLOG.md"
+    ]
+  },
+  "ralph_loop": {
+    "unit_of_work": "user_story",
+    "selection_order": [
+      "phase",
+      "priority",
+      "dependencies"
+    ],
+    "phase_order": [
+      "mvp",
+      "v1",
+      "v2",
+      "v3",
+      "phase4"
+    ],
+    "priority_order": [
+      "P0",
+      "P1",
+      "P2"
+    ],
+    "stop_condition": "all_required_tests_pass",
+    "termination_token": "Promise Complete",
+    "termination_tokens": [
+      "Promise Complete",
+      "<promise>DONE</promise>"
+    ],
+    "status_field": "status",
+    "status_values": [
+      "pending",
+      "in_progress",
+      "blocked",
+      "done"
+    ],
+    "commit_policy": "per_story",
+    "commit_message_template": "feat: implement {id}",
+    "commands": {
+      "unit": "poetry run pytest tests/unit -q",
+      "integration": "poetry run pytest tests/integration -q",
+      "e2e": "poetry run pytest tests/e2e -q",
+      "performance": "poetry run pytest tests/performance -q",
+      "security": "poetry run pytest tests/security -q",
+      "all": "poetry run pytest -q"
+    },
+    "files": {
+      "prd": "PRD_RALPH.json",
+      "prompt": ".ralph/prompt.md",
+      "progress": ".ralph/progress.md",
+      "constitution": ".ralph/constitution.md",
+      "last_message": ".ralph/last_message.txt",
+      "loop_bash": ".ralph/ralph-loop.sh",
+      "loop_powershell": ".ralph/ralph-loop.ps1"
+    },
+    "rules": [
+      "Do not skip required tests for a story.",
+      "Do not change scope or acceptance criteria without updating this JSON.",
+      "Record test evidence in story.test_evidence when a story is marked done."
+    ],
+    "principles": [
+      "Fresh context each iteration; rely on files and git history as memory.",
+      "One story per iteration.",
+      "Tests are the gate; fix failures before proceeding.",
+      "Progress is tracked in .ralph/progress.md."
+    ]
+  },
+  "definitions": {
+    "definition_of_ready": [
+      "Clear acceptance criteria (Given/When/Then).",
+      "Required test types specified.",
+      "Dependencies listed and satisfied or planned.",
+      "Out of scope items listed.",
+      "Success metrics defined."
+    ],
+    "definition_of_done": [
+      "Code implemented.",
+      "Required tests written and passing.",
+      "Documentation updated.",
+      "No critical or high security findings.",
+      "Story status updated to done with test evidence."
+    ]
+  },
+  "quality_gates": {
+    "routing_accuracy_min": 0.8,
+    "budget_overrun_max": 0.0,
+    "log_pii_allowed": false,
+    "performance_mvp": {
+      "routing_p95_ms_max": 100,
+      "request_p95_seconds_max": 2.0
+    }
+  },
+  "test_taxonomy": {
+    "unit": "Pure logic and validators, no network, no database.",
+    "integration": "Multiple components with Postgres/Redis containers.",
+    "e2e": "CLI or API flows from request to result.",
+    "security": "Permission bypass, policy enforcement, prompt injection defenses.",
+    "performance": "Latency and throughput thresholds for MVP."
+  },
+  "user_stories": [
+    {
+      "id": "US-000",
+      "title": "Project bootstrap",
+      "persona": "Developer",
+      "narrative": "As a developer, I want a working project scaffold, so I can run tests and build features reliably.",
+      "phase": "mvp",
+      "priority": "P0",
+      "status": "done",
+      "dependencies": [],
+      "components": [
+        "project_setup",
+        "dependency_management",
+        "docker",
+        "testing"
+      ],
+      "acceptance_criteria": [
+        "Project has pyproject.toml with MVP dependencies and an editable package.",
+        "Project has a minimal package structure (skillos/ and tests/).",
+        "docker-compose.yml for Postgres and Redis exists.",
+        ".env.example exists with required configuration keys.",
+        "poetry run pytest passes with the initial test scaffold."
+      ],
+      "required_test_types": [
+        "unit"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-000-U1",
+          "description": "Package imports and pytest runs on the base scaffold.",
+          "fixtures": [],
+          "expected": "pytest exits 0 and core modules import."
+        }
+      ],
+      "metrics": [
+        "bootstrap_ready == true"
+      ],
+      "out_of_scope": [
+        "Production deployment",
+        "CI pipeline"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "1 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-001",
+      "title": "Declarative skill definition",
+      "persona": "Business owner",
+      "narrative": "As a business owner, I want to define automation tasks declaratively (YAML), so I can add new capabilities in minutes without writing full applications.",
+      "phase": "mvp",
+      "priority": "P0",
+      "status": "done",
+      "dependencies": [
+        "US-000"
+      ],
+      "components": [
+        "skill_registry",
+        "yaml_schema",
+        "validation",
+        "hot_reload",
+        "cli"
+      ],
+      "acceptance_criteria": [
+        "Given a valid skill YAML, when the registry loads, then the skill is available for search and execution.",
+        "Given an invalid skill YAML, when loaded, then validation fails with a clear error.",
+        "Given a YAML update, when hot-reload runs, then the registry reflects the new version without restart.",
+        "Time to add a skill (YAML plus minimal implementation) is under 10 minutes."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-001-U1",
+          "description": "Schema validation rejects missing required fields and invalid types.",
+          "fixtures": [
+            "tests/fixtures/skills/invalid_missing_fields.yaml"
+          ],
+          "expected": "ValidationError with field-level message."
+        },
+        {
+          "type": "integration",
+          "id": "US-001-I1",
+          "description": "Hot-reload updates registry without process restart.",
+          "fixtures": [
+            "tests/fixtures/skills/valid_skill_v1.yaml",
+            "tests/fixtures/skills/valid_skill_v2.yaml"
+          ],
+          "expected": "Registry reflects updated version and metadata."
+        },
+        {
+          "type": "e2e",
+          "id": "US-001-E1",
+          "description": "CLI add-skill creates metadata and implementation; skill executes.",
+          "fixtures": [
+            "tests/fixtures/skills/valid_skill_runtime.yaml"
+          ],
+          "expected": "Skill runs successfully with expected output."
+        }
+      ],
+      "metrics": [
+        "skill_add_time_minutes <= 10",
+        "hot_reload_success_rate == 1.0"
+      ],
+      "out_of_scope": [
+        "Semantic search",
+        "Skill marketplace"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "2 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "1 passed"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "1 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Automatic skill selection",
+      "persona": "User",
+      "narrative": "As a user, I want the system to automatically choose the right skill for my query, so I do not have to remember skill names or IDs.",
+      "phase": "mvp",
+      "priority": "P0",
+      "status": "done",
+      "dependencies": [
+        "US-001"
+      ],
+      "components": [
+        "skill_registry",
+        "orchestrator",
+        "complexity_scorer",
+        "risk_scorer",
+        "logging"
+      ],
+      "acceptance_criteria": [
+        "Given a natural language query, when routed, then the correct skill is selected with >= 0.80 accuracy on the golden set.",
+        "Given low confidence, when routed, then the system suggests alternatives.",
+        "Given no matching skill, when routed, then the system returns no_skill_found without executing anything."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e",
+        "performance"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-002-U1",
+          "description": "Deterministic ranking for keyword scoring and tie-breaking.",
+          "fixtures": [
+            "tests/fixtures/queries/keyword_ties.json"
+          ],
+          "expected": "Stable order across runs."
+        },
+        {
+          "type": "integration",
+          "id": "US-002-I1",
+          "description": "Golden query set maps to expected skill_id with >= 0.80 accuracy.",
+          "fixtures": [
+            "tests/fixtures/golden_queries.json"
+          ],
+          "expected": "accuracy >= 0.80"
+        },
+        {
+          "type": "e2e",
+          "id": "US-002-E1",
+          "description": "CLI run selects skill and logs selection.",
+          "fixtures": [
+            "tests/fixtures/golden_queries.json"
+          ],
+          "expected": "Execution log contains skill_selected with expected skill_id."
+        },
+        {
+          "type": "performance",
+          "id": "US-002-P1",
+          "description": "Routing latency p95 under 100ms on the golden set.",
+          "fixtures": [
+            "tests/fixtures/golden_queries.json"
+          ],
+          "expected": "routing_p95_ms <= 100"
+        }
+      ],
+      "metrics": [
+        "routing_accuracy >= 0.80",
+        "routing_p95_ms <= 100"
+      ],
+      "out_of_scope": [
+        "Semantic search",
+        "Graph-based ranking"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "3 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "2 passed"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "2 passed"
+        },
+        {
+          "command": "poetry run pytest tests/performance -q",
+          "date": "2026-01-17",
+          "summary": "1 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Budget limits",
+      "persona": "User",
+      "narrative": "As a user, I want to set budget limits on AI costs, so I never get surprised by large bills.",
+      "phase": "mvp",
+      "priority": "P0",
+      "status": "done",
+      "dependencies": [
+        "US-001",
+        "US-002"
+      ],
+      "components": [
+        "budget_manager",
+        "orchestrator",
+        "model_selector",
+        "logging"
+      ],
+      "acceptance_criteria": [
+        "Given request cost exceeds per-request limit, when routed, then execution is blocked with budget_exceeded.",
+        "Given daily or monthly limits are reached, when another request arrives, then it is blocked.",
+        "Given low remaining budget, when executing, then a cheaper model is selected."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-003-U1",
+          "description": "Budget check blocks requests that exceed estimated cost.",
+          "fixtures": [],
+          "expected": "BudgetCheckResult.allowed == false"
+        },
+        {
+          "type": "integration",
+          "id": "US-003-I1",
+          "description": "Usage tracking enforces daily and monthly caps across requests.",
+          "fixtures": [],
+          "expected": "Subsequent requests are blocked once cap is reached."
+        },
+        {
+          "type": "e2e",
+          "id": "US-003-E1",
+          "description": "Repeated requests hit limit and return budget_exceeded with clear error.",
+          "fixtures": [],
+          "expected": "Result.status == budget_exceeded and error contains limit info."
+        }
+      ],
+      "metrics": [
+        "budget_overrun == 0.0"
+      ],
+      "out_of_scope": [
+        "Multi-tenant billing",
+        "External billing integrations"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "5 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "3 passed"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "3 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Logging and metrics",
+      "persona": "Product owner",
+      "narrative": "As a product owner, I want comprehensive logging and metrics from day one, so I can tune routing and monitor system health.",
+      "phase": "mvp",
+      "priority": "P0",
+      "status": "done",
+      "dependencies": [
+        "US-002"
+      ],
+      "components": [
+        "logging",
+        "metrics",
+        "observability",
+        "orchestrator"
+      ],
+      "acceptance_criteria": [
+        "Given any request, when routed, then structured logs are emitted for request_received, routing_candidates, routing_decision, budget_check, policy_decision, and execution_result.",
+        "Routing quality metrics are available: top-1 accuracy (golden set), top-3 accuracy, no_skill_found rate, override rate, confidence calibration.",
+        "Operational metrics are available: routing latency, end-to-end latency, success rate per skill, error rate by class, tokens and cost per request.",
+        "Logs are PII-safe and traceable via request_id."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-005-U1",
+          "description": "Log schema validation enforces required fields and PII masking.",
+          "fixtures": [],
+          "expected": "Missing fields rejected; PII redacted."
+        },
+        {
+          "type": "integration",
+          "id": "US-005-I1",
+          "description": "Routing flow emits candidate scores, confidence, and decision reason.",
+          "fixtures": [
+            "tests/fixtures/golden_queries.json"
+          ],
+          "expected": "Logs include routing_candidates and routing_decision with scores."
+        },
+        {
+          "type": "e2e",
+          "id": "US-005-E1",
+          "description": "Golden-set run produces a metrics summary artifact.",
+          "fixtures": [
+            "tests/fixtures/golden_queries.json"
+          ],
+          "expected": "Metrics summary file created and non-empty."
+        }
+      ],
+      "metrics": [
+        "routing_top1_accuracy",
+        "routing_top3_accuracy",
+        "routing_no_skill_found_rate",
+        "routing_override_rate",
+        "routing_confidence_brier",
+        "routing_p95_ms",
+        "request_p95_ms",
+        "skill_success_rate",
+        "error_rate_by_class",
+        "tokens_per_request",
+        "cost_per_request"
+      ],
+      "out_of_scope": [
+        "Distributed tracing UI"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "7 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "4 passed"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "4 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Learning from corrections",
+      "persona": "User",
+      "narrative": "As a user, I want the system to learn from my corrections, so accuracy improves over time.",
+      "phase": "v2",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-002"
+      ],
+      "components": [
+        "feedback_loop",
+        "skill_registry",
+        "scoring"
+      ],
+      "acceptance_criteria": [
+        "Given user feedback, when recorded, then confidence scores are updated.",
+        "Given repeated negative feedback, when routing, then the skill is demoted below alternatives.",
+        "Given positive feedback, when routing, then the skill is promoted within its domain."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-004-U1",
+          "description": "Feedback event updates confidence score and lowers rank on negative feedback.",
+          "fixtures": [],
+          "expected": "Score decreases and rank changes."
+        },
+        {
+          "type": "integration",
+          "id": "US-004-I1",
+          "description": "Feedback loop demotes a skill below threshold and affects routing.",
+          "fixtures": [],
+          "expected": "Different skill selected after negative feedback."
+        },
+        {
+          "type": "e2e",
+          "id": "US-004-E1",
+          "description": "Same query after correction selects improved skill path.",
+          "fixtures": [],
+          "expected": "New selection is recorded and executed."
+        }
+      ],
+      "metrics": [
+        "routing_accuracy increases over time"
+      ],
+      "out_of_scope": [
+        "Fully automated skill generation"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "13 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "10 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "10 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-010",
+      "title": "Approval for risky operations",
+      "persona": "Business owner",
+      "narrative": "As a business owner, I want approval required for risky operations (delete, bulk update), so I do not accidentally damage data.",
+      "phase": "v1",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-002"
+      ],
+      "components": [
+        "risk_scorer",
+        "approval_gate",
+        "policy_engine",
+        "tool_wrapper"
+      ],
+      "acceptance_criteria": [
+        "Given a high-risk operation, when executed, then approval is required before execution.",
+        "Given approval is denied, when executed, then the operation is blocked and logged.",
+        "Given approval policy exists per skill, when executed, then it is enforced."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e",
+        "security"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-010-U1",
+          "description": "Risk scorer flags delete and bulk updates as high risk.",
+          "fixtures": [],
+          "expected": "Risk level >= high risk threshold."
+        },
+        {
+          "type": "integration",
+          "id": "US-010-I1",
+          "description": "Approval gate required before execution; denial blocks.",
+          "fixtures": [],
+          "expected": "Blocked when approval not granted."
+        },
+        {
+          "type": "e2e",
+          "id": "US-010-E1",
+          "description": "Risky skill blocked without approval and runs after approval.",
+          "fixtures": [],
+          "expected": "First attempt blocked; second attempt succeeds."
+        },
+        {
+          "type": "security",
+          "id": "US-010-S1",
+          "description": "Approval bypass attempt is blocked and logged.",
+          "fixtures": [],
+          "expected": "Blocked with audit log entry."
+        }
+      ],
+      "metrics": [
+        "approval_required_for_high_risk == 1.0"
+      ],
+      "out_of_scope": [
+        "Multi-step external approvals"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "9 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "6 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "6 passed"
+        },
+        {
+          "command": "poetry run pytest tests/security -q",
+          "date": "2026-01-17",
+          "summary": "1 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-011",
+      "title": "Dry-run mode",
+      "persona": "User",
+      "narrative": "As a user, I want to run operations in dry-run mode, so I can see effects before committing.",
+      "phase": "v1",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-010"
+      ],
+      "components": [
+        "tool_wrapper",
+        "execution_planner",
+        "preview_renderer"
+      ],
+      "acceptance_criteria": [
+        "Given a write operation, when dry-run is used, then no data is written.",
+        "Given a dry-run, when executed, then affected entities are listed.",
+        "Given a dry-run preview, when approved, then the same plan executes."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-011-U1",
+          "description": "Dry-run prevents write operations and returns preview diff.",
+          "fixtures": [],
+          "expected": "No write performed; preview returned."
+        },
+        {
+          "type": "integration",
+          "id": "US-011-I1",
+          "description": "Dry-run yields no side effects in storage layer.",
+          "fixtures": [],
+          "expected": "Storage unchanged after dry-run."
+        },
+        {
+          "type": "e2e",
+          "id": "US-011-E1",
+          "description": "Dry-run then approve executes the same plan.",
+          "fixtures": [],
+          "expected": "Execution matches previewed plan."
+        }
+      ],
+      "metrics": [
+        "dry_run_side_effects == 0"
+      ],
+      "out_of_scope": [
+        "Interactive UI preview"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "10 passed in 4.39s"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "7 passed, 1 skipped in 7.93s"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "7 passed in 3.17s"
+        }
+      ]
+    },
+    {
+      "id": "US-012",
+      "title": "Granular permissions",
+      "persona": "System admin",
+      "narrative": "As a system admin, I want granular permissions, so different users have appropriate access levels.",
+      "phase": "v1",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-010"
+      ],
+      "components": [
+        "policy_engine",
+        "rbac",
+        "authorization"
+      ],
+      "acceptance_criteria": [
+        "Given missing permissions, when executing a skill, then execution is blocked.",
+        "Given role-based permissions, when executing, then access is granted or denied correctly.",
+        "Given permission violations, when blocked, then an audit log entry is created."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e",
+        "security"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-012-U1",
+          "description": "Permission checker rejects missing permissions.",
+          "fixtures": [],
+          "expected": "PermissionDenied error."
+        },
+        {
+          "type": "integration",
+          "id": "US-012-I1",
+          "description": "RBAC role mapping enforces per-skill permissions.",
+          "fixtures": [],
+          "expected": "Access granted for authorized role only."
+        },
+        {
+          "type": "e2e",
+          "id": "US-012-E1",
+          "description": "Authorized user succeeds; unauthorized user is denied with audit log.",
+          "fixtures": [],
+          "expected": "Success for allowed user; denied for others."
+        },
+        {
+          "type": "security",
+          "id": "US-012-S1",
+          "description": "Privilege escalation attempts are blocked.",
+          "fixtures": [],
+          "expected": "Denied with audit entry."
+        }
+      ],
+      "metrics": [
+        "permission_bypass_rate == 0"
+      ],
+      "out_of_scope": [
+        "Third-party identity providers"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "11 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "8 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "8 passed"
+        },
+        {
+          "command": "poetry run pytest tests/security -q",
+          "date": "2026-01-17",
+          "summary": "2 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-020",
+      "title": "Proactive suggestions",
+      "persona": "Power user",
+      "narrative": "As a power user, I want the system to proactively suggest actions based on my calendar or data, so I am ahead of deadlines.",
+      "phase": "v3",
+      "priority": "P2",
+      "status": "done",
+      "dependencies": [
+        "US-002"
+      ],
+      "components": [
+        "scheduler",
+        "context_monitor",
+        "notification"
+      ],
+      "acceptance_criteria": [
+        "Given opt-in is enabled, when relevant context appears, then a suggestion is generated.",
+        "Given opt-in is disabled, when context appears, then no suggestion is created.",
+        "Given user preference limits, when suggestions are generated, then frequency respects limits."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-020-U1",
+          "description": "Opt-in gating and preference throttling enforced.",
+          "fixtures": [],
+          "expected": "No suggestions when opt-out; throttled when limit reached."
+        },
+        {
+          "type": "integration",
+          "id": "US-020-I1",
+          "description": "Scheduler triggers suggestions from calendar or data sources.",
+          "fixtures": [],
+          "expected": "Suggestion created on schedule."
+        },
+        {
+          "type": "e2e",
+          "id": "US-020-E1",
+          "description": "User receives suggestion; dismissal reduces frequency.",
+          "fixtures": [],
+          "expected": "Dismissal logged and rate reduced."
+        }
+      ],
+      "metrics": [
+        "suggestion_opt_in_rate",
+        "dismissal_rate"
+      ],
+      "out_of_scope": [
+        "Fully autonomous execution without user approval"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "18 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "14 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "14 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-021",
+      "title": "Skill composition",
+      "persona": "Business owner",
+      "narrative": "As a business owner, I want the system to create new skills by combining existing ones, so my automation grows organically.",
+      "phase": "v2",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-001",
+        "US-002"
+      ],
+      "components": [
+        "composition_engine",
+        "skill_registry",
+        "approval_gate"
+      ],
+      "acceptance_criteria": [
+        "Given compatible skills, when composing, then a new composed skill is created without code generation.",
+        "Given a composed skill, when executed, then it runs in defined order and is versioned.",
+        "Given a new composed skill, when activated, then human approval is required."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-021-U1",
+          "description": "Composition rules prevent cycles and validate IO contracts.",
+          "fixtures": [],
+          "expected": "Invalid graphs rejected."
+        },
+        {
+          "type": "integration",
+          "id": "US-021-I1",
+          "description": "Composed skill executes in defined order and is versioned.",
+          "fixtures": [],
+          "expected": "Execution order matches composition; version updated."
+        },
+        {
+          "type": "e2e",
+          "id": "US-021-E1",
+          "description": "Composed skill passes test harness before activation.",
+          "fixtures": [],
+          "expected": "Activation blocked until tests pass."
+        }
+      ],
+      "metrics": [
+        "composition_success_rate"
+      ],
+      "out_of_scope": [
+        "Automatic code generation"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "15 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "11 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "11 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-022",
+      "title": "Skill optimization",
+      "persona": "Developer",
+      "narrative": "As a developer, I want the system to suggest optimizations for my skills, so performance improves automatically.",
+      "phase": "v2",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-021"
+      ],
+      "components": [
+        "optimizer",
+        "experimentation",
+        "metrics"
+      ],
+      "acceptance_criteria": [
+        "Given multiple variants, when A/B testing runs, then metrics are recorded per variant.",
+        "Given statistical confidence, when a variant wins, then it is promoted automatically.",
+        "Given regression, when detected, then rollback is automatic."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-022-U1",
+          "description": "A/B routing stable and metrics recorded per variant.",
+          "fixtures": [],
+          "expected": "Variant assignment consistent per user."
+        },
+        {
+          "type": "integration",
+          "id": "US-022-I1",
+          "description": "Optimizer promotes only with statistical confidence; rollback on regression.",
+          "fixtures": [],
+          "expected": "Promotion only after threshold; rollback on regression."
+        },
+        {
+          "type": "e2e",
+          "id": "US-022-E1",
+          "description": "Performance improves or reverts; decisions logged.",
+          "fixtures": [],
+          "expected": "Decision log includes reason and metrics."
+        }
+      ],
+      "metrics": [
+        "optimization_win_rate",
+        "rollback_rate"
+      ],
+      "out_of_scope": [
+        "Fully autonomous model retraining"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "16 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "12 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "12 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-030",
+      "title": "Debugging tools",
+      "persona": "Developer",
+      "narrative": "As a developer, I want comprehensive debugging tools, so I can quickly identify and fix issues.",
+      "phase": "v1",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-002"
+      ],
+      "components": [
+        "debugger",
+        "tracing",
+        "profiling"
+      ],
+      "acceptance_criteria": [
+        "Given a run, when debug mode is enabled, then each step is recorded with inputs and outputs.",
+        "Given a run, when profiling is enabled, then timing per step is recorded.",
+        "Given a run, when visual trace is requested, then it renders in CLI."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-030-U1",
+          "description": "Trace spans recorded with deterministic ordering.",
+          "fixtures": [],
+          "expected": "Span order stable across runs."
+        },
+        {
+          "type": "integration",
+          "id": "US-030-I1",
+          "description": "Debug run captures inputs and outputs per step.",
+          "fixtures": [],
+          "expected": "Trace includes inputs and outputs for each step."
+        },
+        {
+          "type": "e2e",
+          "id": "US-030-E1",
+          "description": "CLI debug view renders trace and timings.",
+          "fixtures": [],
+          "expected": "CLI output includes trace and timing table."
+        }
+      ],
+      "metrics": [
+        "debug_trace_completeness == 1.0"
+      ],
+      "out_of_scope": [
+        "Web UI debugger"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "12 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "9 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "9 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-031",
+      "title": "Local testing",
+      "persona": "Developer",
+      "narrative": "As a developer, I want to test skills locally before deployment, so I catch bugs early.",
+      "phase": "mvp",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-001"
+      ],
+      "components": [
+        "test_harness",
+        "mocks",
+        "coverage"
+      ],
+      "acceptance_criteria": [
+        "Given a skill, when running local tests, then external APIs are mocked.",
+        "Given a test run, when complete, then a coverage report is generated.",
+        "Given Postgres and Redis, when integration tests run, then they pass locally."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-031-U1",
+          "description": "Test harness loads a skill and mocks external APIs.",
+          "fixtures": [],
+          "expected": "No real network calls in unit tests."
+        },
+        {
+          "type": "integration",
+          "id": "US-031-I1",
+          "description": "Local suite runs with Postgres and Redis containers.",
+          "fixtures": [],
+          "expected": "Integration tests pass locally."
+        },
+        {
+          "type": "e2e",
+          "id": "US-031-E1",
+          "description": "skillos test <skill> produces coverage report.",
+          "fixtures": [],
+          "expected": "Coverage report file created."
+        }
+      ],
+      "metrics": [
+        "local_test_runtime_seconds <= 5"
+      ],
+      "out_of_scope": [
+        "Remote CI integration"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "8 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "4 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "5 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-032",
+      "title": "Community skill marketplace",
+      "persona": "Developer",
+      "narrative": "As a developer, I want a marketplace of community skills, so I do not reinvent the wheel.",
+      "phase": "v2",
+      "priority": "P2",
+      "status": "done",
+      "dependencies": [
+        "US-001",
+        "US-031"
+      ],
+      "components": [
+        "marketplace",
+        "package_manager",
+        "signature_verification"
+      ],
+      "acceptance_criteria": [
+        "Given a marketplace catalog, when browsing, then skills are filterable and viewable.",
+        "Given an install command, when run, then the skill is installed with dependencies resolved.",
+        "Given a signed package, when installed, then signature verification passes or fails clearly."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e",
+        "security"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-032-U1",
+          "description": "Package metadata validation and signature verification.",
+          "fixtures": [
+            "tests/fixtures/marketplace/package_valid.json",
+            "tests/fixtures/marketplace/package_invalid.json"
+          ],
+          "expected": "Valid package accepted; invalid rejected."
+        },
+        {
+          "type": "integration",
+          "id": "US-032-I1",
+          "description": "Install and uninstall resolve dependencies and versions.",
+          "fixtures": [],
+          "expected": "Dependencies resolved and state updated."
+        },
+        {
+          "type": "e2e",
+          "id": "US-032-E1",
+          "description": "Browse -> install -> execute a community skill.",
+          "fixtures": [],
+          "expected": "Skill executes successfully after install."
+        },
+        {
+          "type": "security",
+          "id": "US-032-S1",
+          "description": "Tampered package is rejected and logged.",
+          "fixtures": [],
+          "expected": "Install blocked with audit log."
+        }
+      ],
+      "metrics": [
+        "marketplace_install_success_rate"
+      ],
+      "out_of_scope": [
+        "Paid billing for community skills"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-17",
+          "summary": "17 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-17",
+          "summary": "13 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-17",
+          "summary": "13 passed"
+        },
+        {
+          "command": "poetry run pytest tests/security -q",
+          "date": "2026-01-17",
+          "summary": "3 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-040",
+      "title": "Scheduling (tick mode)",
+      "persona": "Power user",
+      "narrative": "As a user, I want scheduled execution of skills (tick mode), so automations run without manual triggers.",
+      "phase": "v1",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-002",
+        "US-003",
+        "US-010",
+        "US-012",
+        "US-031"
+      ],
+      "components": [
+        "scheduler",
+        "schedule_store",
+        "cli",
+        "tool_wrapper",
+        "policy_engine",
+        "budget_manager",
+        "approval_gate",
+        "telemetry"
+      ],
+      "acceptance_criteria": [
+        "Given a schedule is due, when `skillos schedule tick` runs, then the target skill executes through the same execution pipeline (Budget/Policy/Approval) and logs schedule events.",
+        "Given a schedule is disabled, when tick runs, then it is not executed.",
+        "Given skill execution fails, retries increment up to max_retries, then status is recorded and failure event logged.",
+        "Given no schedules are due, tick exits cleanly with no executions.",
+        "Schedules are stored under the skills root (schedules/schedules.json) and support ISO-8601 run_at, timezone, and payload."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-040-U1",
+          "description": "Due schedule detection and disabled schedule skip.",
+          "fixtures": [],
+          "expected": "Only due and enabled schedules are selected."
+        },
+        {
+          "type": "integration",
+          "id": "US-040-I1",
+          "description": "Tick execution uses ToolWrapper/Policy/Budget and emits schedule events.",
+          "fixtures": [],
+          "expected": "Execution path matches the normal run pipeline and logs schedule events."
+        },
+        {
+          "type": "e2e",
+          "id": "US-040-E1",
+          "description": "schedule add + schedule tick executes due schedule and writes logs.",
+          "fixtures": [],
+          "expected": "Due schedule executes and log file contains schedule events."
+        }
+      ],
+      "metrics": [
+        "schedule_due_rate",
+        "schedule_success_rate",
+        "schedule_failure_rate",
+        "schedule_lag_ms_p95",
+        "schedule_retry_rate"
+      ],
+      "out_of_scope": [
+        "Always-on daemon",
+        "Cron expression parsing",
+        "Multi-tenant scheduling"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest -q",
+          "date": "2026-01-17",
+          "summary": "53 passed, 1 skipped"
+        }
+      ]
+    },
+    {
+      "id": "US-041",
+      "title": "Integration connector framework",
+      "persona": "Developer",
+      "narrative": "As a developer, I want config-driven integration connectors with secrets, so I can wire external APIs quickly.",
+      "phase": "v1",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-001",
+        "US-005",
+        "US-031"
+      ],
+      "components": [
+        "integration_registry",
+        "connector_config",
+        "secrets_store",
+        "http_client",
+        "telemetry"
+      ],
+      "acceptance_criteria": [
+        "Given a connector definition file, when validated, then schema errors are reported and the connector is registered (http, sql, or vector).",
+        "Given a SQL connector, SQLite is the default and Postgres is optional via psycopg using a DSN.",
+        "Given a vector connector, Qdrant endpoint configuration is used for vector operations.",
+        "Given a connector references secrets, when loaded, then values are resolved from env or secret store and not stored in plaintext.",
+        "Given a skill uses a connector, when it calls an endpoint, then auth, headers, timeouts, and rate limits apply and integration_call is logged."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-041-U1",
+          "description": "Connector schema validation and secret resolution.",
+          "fixtures": [],
+          "expected": "Invalid configs rejected; secrets resolved without plaintext."
+        },
+        {
+          "type": "integration",
+          "id": "US-041-I1",
+          "description": "Connector-based HTTP call emits integration_call telemetry.",
+          "fixtures": [],
+          "expected": "Call uses auth and logs integration_call with latency/status."
+        },
+        {
+          "type": "e2e",
+          "id": "US-041-E1",
+          "description": "Scaffold connector and execute a skill that uses it.",
+          "fixtures": [],
+          "expected": "Skill executes using connector configuration."
+        }
+      ],
+      "metrics": [
+        "integration_call_success_rate",
+        "integration_call_latency_ms_p95"
+      ],
+      "out_of_scope": [
+        "Full OAuth device flows",
+        "Marketplace distribution of connectors"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-19",
+          "summary": "21 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-19",
+          "summary": "16 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-19",
+          "summary": "16 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-042",
+      "title": "Webhook triggers",
+      "persona": "Operator",
+      "narrative": "As an operator, I want webhook triggers mapped to skills, so external systems can start workflows.",
+      "phase": "v1",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-002",
+        "US-003",
+        "US-010",
+        "US-012",
+        "US-031",
+        "US-045"
+      ],
+      "components": [
+        "webhook_ingest",
+        "trigger_registry",
+        "payload_mapper",
+        "queue",
+        "telemetry"
+      ],
+      "acceptance_criteria": [
+        "Given skillos webhook handle --id <id> --path <json> --signature <header>, when the signature is valid, then the event is accepted and enqueued.",
+        "Signature format is X-SkillOS-Signature: t=<unix>,v1=<hex> over base string {t}.{raw_body} with TTL 300s.",
+        "Given an invalid or expired signature, the request is rejected and logged with status 401 or 410.",
+        "Given a malformed payload, the request is rejected with status 400; success returns 200.",
+        "Given a trigger mapping, the payload is transformed and routed to the configured skill id."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-042-U1",
+          "description": "Signature validation and payload mapping.",
+          "fixtures": [],
+          "expected": "Valid signatures pass; invalid signatures fail; mapping applies."
+        },
+        {
+          "type": "integration",
+          "id": "US-042-I1",
+          "description": "Webhook event is enqueued and executed via pipeline.",
+          "fixtures": [],
+          "expected": "Webhook triggers job creation and pipeline execution."
+        },
+        {
+          "type": "e2e",
+          "id": "US-042-E1",
+          "description": "skillos webhook handle triggers a skill and logs webhook_received.",
+          "fixtures": [],
+          "expected": "Skill executes and webhook_received appears in logs."
+        }
+      ],
+      "metrics": [
+        "webhook_accept_rate",
+        "webhook_to_job_latency_ms_p95"
+      ],
+      "out_of_scope": [
+        "Public multi-tenant webhook gateway",
+        "Dynamic per-user webhook provisioning"
+      ],
+      "test_evidence": []
+    },
+    {
+      "id": "US-043",
+      "title": "Async job runner and retries",
+      "persona": "Operator",
+      "narrative": "As an operator, I want asynchronous job execution with retries, so long tasks do not block and failures can recover.",
+      "phase": "v1",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-002",
+        "US-003",
+        "US-010",
+        "US-012",
+        "US-031"
+      ],
+      "components": [
+        "job_queue",
+        "worker",
+        "retry_policy",
+        "telemetry"
+      ],
+      "acceptance_criteria": [
+        "Given a queued job, when a worker runs, then the job executes through the same pipeline and updates status in SQLite at {skills_root}/runtime/jobs.db.",
+        "Given a job failure, retries increment with backoff up to max_retries and are logged.",
+        "Job states are persisted as queued, running, succeeded, or failed."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-043-U1",
+          "description": "Job state transitions and retry backoff.",
+          "fixtures": [],
+          "expected": "Transitions and backoff follow policy."
+        },
+        {
+          "type": "integration",
+          "id": "US-043-I1",
+          "description": "Worker processes queued jobs and records status.",
+          "fixtures": [],
+          "expected": "Queued jobs are executed and status updated."
+        },
+        {
+          "type": "e2e",
+          "id": "US-043-E1",
+          "description": "End-to-end job execution from queue to completion.",
+          "fixtures": [],
+          "expected": "Job completes and emits job events."
+        }
+      ],
+      "metrics": [
+        "job_success_rate",
+        "job_queue_latency_ms_p95",
+        "job_retry_rate"
+      ],
+      "out_of_scope": [
+        "Distributed scheduler",
+        "Auto-scaling workers"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-19",
+          "summary": "23 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-19",
+          "summary": "17 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-19",
+          "summary": "17 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-044",
+      "title": "Parallel execution graph",
+      "persona": "Power user",
+      "narrative": "As a power user, I want parallel steps in workflows, so automations finish faster.",
+      "phase": "v1",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-021",
+        "US-043"
+      ],
+      "components": [
+        "composition_engine",
+        "execution_graph",
+        "worker_pool",
+        "telemetry"
+      ],
+      "acceptance_criteria": [
+        "Given a composition with parallel groups, independent steps execute concurrently up to a configured limit.",
+        "Given a step failure, the workflow fails fast and logs the error.",
+        "Execution records per-step durations and output order."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-044-U1",
+          "description": "Validate parallel execution graph structure.",
+          "fixtures": [],
+          "expected": "Invalid graphs rejected; valid graphs accepted."
+        },
+        {
+          "type": "integration",
+          "id": "US-044-I1",
+          "description": "Parallel steps execute concurrently and record timings.",
+          "fixtures": [],
+          "expected": "Independent steps run concurrently within limits."
+        },
+        {
+          "type": "e2e",
+          "id": "US-044-E1",
+          "description": "Workflow with parallel steps completes with aggregated output.",
+          "fixtures": [],
+          "expected": "Outputs include results from all branches."
+        }
+      ],
+      "metrics": [
+        "parallel_speedup_ratio",
+        "parallel_execution_fail_rate"
+      ],
+      "out_of_scope": [
+        "Speculative execution",
+        "Cross-tenant resource isolation"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-19",
+          "summary": "25 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-19",
+          "summary": "18 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-19",
+          "summary": "18 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-045",
+      "title": "Idempotency and deduplication",
+      "persona": "Operator",
+      "narrative": "As an operator, I want idempotency for triggers, so duplicate events do not cause double actions.",
+      "phase": "v1",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-031",
+        "US-005"
+      ],
+      "components": [
+        "idempotency_store",
+        "trigger_registry",
+        "telemetry"
+      ],
+      "acceptance_criteria": [
+        "Given a duplicate idempotency key within TTL, execution is skipped and logged.",
+        "Idempotency keys are scoped to trigger source and skill id.",
+        "TTL expiry allows the same key to be processed again."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-045-U1",
+          "description": "Idempotency store detects duplicates and TTL expiry.",
+          "fixtures": [],
+          "expected": "Duplicates are detected within TTL; expiry clears keys."
+        },
+        {
+          "type": "integration",
+          "id": "US-045-I1",
+          "description": "Duplicate events are skipped with idempotency logging.",
+          "fixtures": [],
+          "expected": "Second event is skipped and logged."
+        },
+        {
+          "type": "e2e",
+          "id": "US-045-E1",
+          "description": "Repeated webhook does not execute the skill twice.",
+          "fixtures": [],
+          "expected": "Only one execution occurs per key within TTL."
+        }
+      ],
+      "metrics": [
+        "idempotency_skip_rate",
+        "duplicate_event_rate"
+      ],
+      "out_of_scope": [
+        "Cross-cluster idempotency"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-19",
+          "summary": "26 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-19",
+          "summary": "19 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-19",
+          "summary": "19 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-046",
+      "title": "Multimodal attachments",
+      "persona": "User",
+      "narrative": "As a user, I want triggers to accept attachments so skills can process files and images.",
+      "phase": "v1",
+      "priority": "P2",
+      "status": "done",
+      "dependencies": [
+        "US-042",
+        "US-043"
+      ],
+      "components": [
+        "attachment_ingest",
+        "storage",
+        "telemetry"
+      ],
+      "acceptance_criteria": [
+        "Given an inbound request with attachments, files are stored under {skills_root}/attachments and references are attached to the payload.",
+        "Skills receive attachment metadata and references instead of raw bytes.",
+        "Logs record attachment size and type without storing raw content."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-046-U1",
+          "description": "Attachment validation and metadata extraction.",
+          "fixtures": [],
+          "expected": "Invalid attachments rejected; metadata normalized."
+        },
+        {
+          "type": "integration",
+          "id": "US-046-I1",
+          "description": "Attachment ingestion stores files and returns references.",
+          "fixtures": [],
+          "expected": "Files stored and references passed to skills."
+        },
+        {
+          "type": "e2e",
+          "id": "US-046-E1",
+          "description": "Webhook with file triggers skill with attachment reference.",
+          "fixtures": [],
+          "expected": "Skill receives attachment reference and executes."
+        }
+      ],
+      "metrics": [
+        "attachment_ingest_success_rate",
+        "attachment_store_latency_ms_p95"
+      ],
+      "out_of_scope": [
+        "Large media transcoding",
+        "Long-term archival retention policies"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-19",
+          "summary": "29 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-19",
+          "summary": "21 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-19",
+          "summary": "21 passed"
+        }
+      ]
+    },
+    {
+      "id": "US-047",
+      "title": "Secrets setup wizard (CLI)",
+      "persona": "Operator",
+      "narrative": "As an operator, I want a guided secrets setup wizard, so I can configure integrations quickly and safely.",
+      "phase": "v1",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": [
+        "US-041",
+        "US-005",
+        "US-031"
+      ],
+      "components": [
+        "secrets_wizard",
+        "connector_config",
+        "secrets_store",
+        "cli",
+        "telemetry"
+      ],
+      "acceptance_criteria": [
+        "Given a connector schema with required secrets, skillos secrets init --connector <id> lists required keys and prompts for values.",
+        "Given secret values are entered, they are stored in an env file (default: {skills_root}/secrets/.env) without being printed in plaintext.",
+        "Secrets are stored with keys in the form SKILLOS_<INTEGRATION>_<KEY> and a .env.example is updated in the repo.",
+        "Given configured secrets, skills resolve them at runtime and logs redact sensitive fields."
+      ],
+      "required_test_types": [
+        "unit",
+        "integration",
+        "e2e"
+      ],
+      "required_tests": [
+        {
+          "type": "unit",
+          "id": "US-047-U1",
+          "description": "Required secret keys are derived from connector schema and prompts are defined.",
+          "fixtures": [],
+          "expected": "Wizard builds prompts for all required secret keys."
+        },
+        {
+          "type": "integration",
+          "id": "US-047-I1",
+          "description": "Secret resolution works and logs are redacted.",
+          "fixtures": [],
+          "expected": "Resolved secrets are used and logs contain redacted values."
+        },
+        {
+          "type": "e2e",
+          "id": "US-047-E1",
+          "description": "skillos secrets init --connector <id> writes the env file and does not echo values.",
+          "fixtures": [],
+          "expected": "Env file created and CLI output hides secrets."
+        }
+      ],
+      "metrics": [
+        "secrets_wizard_completion_rate",
+        "secret_resolution_success_rate"
+      ],
+      "out_of_scope": [
+        "Hardware security modules",
+        "Managed secrets vault"
+      ],
+      "test_evidence": [
+        {
+          "command": "poetry run pytest tests/unit -q",
+          "date": "2026-01-19",
+          "summary": "27 passed"
+        },
+        {
+          "command": "poetry run pytest tests/integration -q",
+          "date": "2026-01-19",
+          "summary": "20 passed, 1 skipped"
+        },
+        {
+          "command": "poetry run pytest tests/e2e -q",
+          "date": "2026-01-19",
+          "summary": "20 passed"
+        }
+      ]
+    }
+  ]
+}

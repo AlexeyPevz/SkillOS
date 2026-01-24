@@ -1,0 +1,14 @@
+[
+  {
+    "id": "community/base",
+    "name": "Base Skill",
+    "description": "Base helper",
+    "version": "1.0.0",
+    "entrypoint": "implementations.community.base:run",
+    "tags": ["community", "base"],
+    "dependencies": [],
+    "implementation": "def run(payload='ok'):\n    return f'{payload}-base'\n",
+    "signature": "cec2cb91afb34255d3d42cae57adf6be0904f5180f2c9ff4616ecc2aeff92929",
+    "signature_key_id": "community-v1"
+  }
+]

@@ -1,0 +1,10 @@
+id: zakupki/analyze_document
+name: Analyze Document
+description: Analyze procurement documents and extract key requirements
+version: 0.1.0
+entrypoint: implementations.zakupki.analyze_document:run
+tags:
+- zakupki
+- document
+- requirements
+- analysis

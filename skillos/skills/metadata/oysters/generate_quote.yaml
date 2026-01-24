@@ -1,0 +1,9 @@
+id: oysters/generate_quote
+name: Generate Quote
+description: Generate a customer quote for oyster orders
+version: 0.1.0
+entrypoint: implementations.oysters.generate_quote:run
+tags:
+- oysters
+- quote
+- pricing

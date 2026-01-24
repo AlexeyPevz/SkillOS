@@ -1,0 +1,10 @@
+id: office/coffee_break
+name: Coffee Break
+description: Auto-generated skill for office/coffee_break
+version: 0.1.0
+entrypoint: implementations.office.coffee_break:run
+tags:
+- office
+- coffee
+- break
+- rest

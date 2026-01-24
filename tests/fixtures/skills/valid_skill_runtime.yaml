@@ -1,0 +1,7 @@
+id: travel/search_flights
+name: Search Flights
+description: Auto-generated skill for travel/search_flights
+version: 0.1.0
+entrypoint: implementations.travel.search_flights:run
+tags:
+  - travel

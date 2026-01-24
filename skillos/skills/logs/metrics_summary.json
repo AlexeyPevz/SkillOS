@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-01-21T07:02:35.871043+00:00",
+  "total_requests": 30,
+  "metrics": {
+    "routing_top1_accuracy": 0.8666666666666667,
+    "routing_top3_accuracy": 0.9333333333333333,
+    "routing_no_skill_found_rate": 0.0,
+    "routing_override_rate": 0.0,
+    "routing_confidence_brier": 0.27544045842263226,
+    "routing_p95_ms": 0.5788999842479825,
+    "request_p95_ms": 0.5788999842479825,
+    "skill_success_rate": {
+      "zakupki.search_tenders": 1.0,
+      "zakupki.analyze_document": 0.5,
+      "zakupki.check_requirements": 0.5,
+      "oysters.get_pricelist": 1.0,
+      "oysters.calculate_logistics": 1.0,
+      "oysters.calculate_margin": 1.0,
+      "oysters.generate_quote": 1.0,
+      "travel.search_flights": 1.0,
+      "travel.search_hotels": 1.0,
+      "travel.build_itinerary": 1.0,
+      "finance.get_exchange_rates": 1.0,
+      "finance.convert_currency": 1.0,
+      "finance.track_expenses": 1.0,
+      "research.web_search": 0.5,
+      "research.summarize_article": 0.5
+    },
+    "error_rate_by_class": {
+      "misroute": 0.13333333333333333
+    },
+    "tokens_per_request": 8.933333333333334,
+    "cost_per_request": 1.0
+  }
+}

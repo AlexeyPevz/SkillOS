@@ -1,0 +1,9 @@
+id: finance/convert_currency
+name: Convert Currency
+description: Convert between currencies
+version: 0.1.0
+entrypoint: implementations.finance.convert_currency:run
+tags:
+- finance
+- convert
+- currency

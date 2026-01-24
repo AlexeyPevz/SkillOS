@@ -1,0 +1,9 @@
+id: travel/build_itinerary
+name: Build Itinerary
+description: Build a travel itinerary
+version: 0.1.0
+entrypoint: implementations.travel.build_itinerary:run
+tags:
+- travel
+- itinerary
+- plan

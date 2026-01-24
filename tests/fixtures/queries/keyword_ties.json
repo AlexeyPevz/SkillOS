@@ -1,0 +1,38 @@
+[
+  {
+    "id": "KT-001",
+    "query": "tender document requirements",
+    "candidates": [
+      { "skill_id": "zakupki.search_tenders", "score": 0.8 },
+      { "skill_id": "zakupki.analyze_document", "score": 0.8 }
+    ],
+    "expected_order": [
+      "zakupki.analyze_document",
+      "zakupki.search_tenders"
+    ]
+  },
+  {
+    "id": "KT-002",
+    "query": "currency rate usd rub",
+    "candidates": [
+      { "skill_id": "finance.get_exchange_rates", "score": 0.7 },
+      { "skill_id": "finance.convert_currency", "score": 0.7 }
+    ],
+    "expected_order": [
+      "finance.get_exchange_rates",
+      "finance.convert_currency"
+    ]
+  },
+  {
+    "id": "KT-003",
+    "query": "travel plan hotel itinerary",
+    "candidates": [
+      { "skill_id": "travel.search_hotels", "score": 0.6 },
+      { "skill_id": "travel.build_itinerary", "score": 0.6 }
+    ],
+    "expected_order": [
+      "travel.build_itinerary",
+      "travel.search_hotels"
+    ]
+  }
+]

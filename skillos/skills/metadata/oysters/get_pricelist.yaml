@@ -1,0 +1,9 @@
+id: oysters/get_pricelist
+name: Get Pricelist
+description: Fetch oyster supplier price list
+version: 0.1.0
+entrypoint: implementations.oysters.get_pricelist:run
+tags:
+- oysters
+- price
+- pricelist

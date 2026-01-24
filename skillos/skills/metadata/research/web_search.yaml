@@ -1,0 +1,9 @@
+id: research/web_search
+name: Web Search
+description: Search the web for information
+version: 0.1.0
+entrypoint: implementations.research.web_search:run
+tags:
+- research
+- web
+- search

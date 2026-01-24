@@ -1,0 +1,152 @@
+[
+  {
+    "id": "GQ-001",
+    "query": "Find public tenders for road construction in Belgorod region.",
+    "expected_skill_id": "zakupki.search_tenders"
+  },
+  {
+    "id": "GQ-002",
+    "query": "Search government procurement tenders for medical equipment this month.",
+    "expected_skill_id": "zakupki.search_tenders"
+  },
+  {
+    "id": "GQ-003",
+    "query": "Analyze this tender document and extract key requirements and deadlines.",
+    "expected_skill_id": "zakupki.analyze_document"
+  },
+  {
+    "id": "GQ-004",
+    "query": "Summarize a procurement PDF: budget, timeline, eligibility.",
+    "expected_skill_id": "zakupki.analyze_document"
+  },
+  {
+    "id": "GQ-005",
+    "query": "Check if this tender requires ISO 9001 or ISO 14001 certification.",
+    "expected_skill_id": "zakupki.check_requirements"
+  },
+  {
+    "id": "GQ-006",
+    "query": "Verify if participation requires a bank guarantee and minimum revenue.",
+    "expected_skill_id": "zakupki.check_requirements"
+  },
+  {
+    "id": "GQ-007",
+    "query": "Get the latest oyster supplier price list.",
+    "expected_skill_id": "oysters.get_pricelist"
+  },
+  {
+    "id": "GQ-008",
+    "query": "Show current oyster prices by size and grade.",
+    "expected_skill_id": "oysters.get_pricelist"
+  },
+  {
+    "id": "GQ-009",
+    "query": "Calculate logistics cost for shipping 500 kg oysters from Vladivostok to Moscow.",
+    "expected_skill_id": "oysters.calculate_logistics"
+  },
+  {
+    "id": "GQ-010",
+    "query": "Estimate delivery cost and time for 200 kg oysters to Saint Petersburg.",
+    "expected_skill_id": "oysters.calculate_logistics"
+  },
+  {
+    "id": "GQ-011",
+    "query": "Calculate profit margin with cost 600 and sale price 1200.",
+    "expected_skill_id": "oysters.calculate_margin"
+  },
+  {
+    "id": "GQ-012",
+    "query": "Compute margin for 350 units at cost 4.20 and price 6.50.",
+    "expected_skill_id": "oysters.calculate_margin"
+  },
+  {
+    "id": "GQ-013",
+    "query": "Generate a quote for 200 kg oysters with delivery included.",
+    "expected_skill_id": "oysters.generate_quote"
+  },
+  {
+    "id": "GQ-014",
+    "query": "Create a client quote for 150 boxes oysters with 2-day shipping.",
+    "expected_skill_id": "oysters.generate_quote"
+  },
+  {
+    "id": "GQ-015",
+    "query": "Search flights from Moscow to Sochi on May 10.",
+    "expected_skill_id": "travel.search_flights"
+  },
+  {
+    "id": "GQ-016",
+    "query": "Find cheapest flights Berlin to Istanbul next weekend.",
+    "expected_skill_id": "travel.search_flights"
+  },
+  {
+    "id": "GQ-017",
+    "query": "Find hotels in Sochi near the sea for 3 nights.",
+    "expected_skill_id": "travel.search_hotels"
+  },
+  {
+    "id": "GQ-018",
+    "query": "Search a 4-star hotel in Istanbul city center for 2 adults.",
+    "expected_skill_id": "travel.search_hotels"
+  },
+  {
+    "id": "GQ-019",
+    "query": "Build a 5-day itinerary in Istanbul with museums and food.",
+    "expected_skill_id": "travel.build_itinerary"
+  },
+  {
+    "id": "GQ-020",
+    "query": "Create a 3-day business trip itinerary for Dubai.",
+    "expected_skill_id": "travel.build_itinerary"
+  },
+  {
+    "id": "GQ-021",
+    "query": "Get the current USD/RUB exchange rate.",
+    "expected_skill_id": "finance.get_exchange_rates"
+  },
+  {
+    "id": "GQ-022",
+    "query": "Fetch EUR/USD and GBP/USD rates today.",
+    "expected_skill_id": "finance.get_exchange_rates"
+  },
+  {
+    "id": "GQ-023",
+    "query": "Convert 1000 USD to RUB.",
+    "expected_skill_id": "finance.convert_currency"
+  },
+  {
+    "id": "GQ-024",
+    "query": "Convert 250 EUR to USD.",
+    "expected_skill_id": "finance.convert_currency"
+  },
+  {
+    "id": "GQ-025",
+    "query": "Track expenses for January by category.",
+    "expected_skill_id": "finance.track_expenses"
+  },
+  {
+    "id": "GQ-026",
+    "query": "Summarize last month's expenses and top categories.",
+    "expected_skill_id": "finance.track_expenses"
+  },
+  {
+    "id": "GQ-027",
+    "query": "Search the web for oyster market trends 2025.",
+    "expected_skill_id": "research.web_search"
+  },
+  {
+    "id": "GQ-028",
+    "query": "Find recent regulations on public procurement in Russia.",
+    "expected_skill_id": "research.web_search"
+  },
+  {
+    "id": "GQ-029",
+    "query": "Summarize this article about procurement law changes.",
+    "expected_skill_id": "research.summarize_article"
+  },
+  {
+    "id": "GQ-030",
+    "query": "Summarize a report on global logistics costs.",
+    "expected_skill_id": "research.summarize_article"
+  }
+]

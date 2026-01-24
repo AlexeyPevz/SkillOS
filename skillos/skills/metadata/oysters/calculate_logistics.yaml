@@ -1,0 +1,10 @@
+id: oysters/calculate_logistics
+name: Calculate Logistics
+description: Estimate shipping costs for oyster deliveries
+version: 0.1.0
+entrypoint: implementations.oysters.calculate_logistics:run
+tags:
+- oysters
+- logistics
+- shipping
+- delivery

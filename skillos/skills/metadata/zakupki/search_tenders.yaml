@@ -1,0 +1,10 @@
+id: zakupki/search_tenders
+name: Search Tenders
+description: Search public tenders for procurement opportunities
+version: 0.1.0
+entrypoint: implementations.zakupki.search_tenders:run
+tags:
+- zakupki
+- tender
+- procurement
+- search

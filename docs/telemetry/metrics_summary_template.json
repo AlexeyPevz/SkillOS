@@ -1,0 +1,44 @@
+{
+  "run_id": null,
+  "timestamp": null,
+  "model": null,
+  "dataset": "tests/fixtures/golden_queries.json",
+  "total_queries": null,
+  "routing": {
+    "top1_accuracy": null,
+    "top3_accuracy": null,
+    "no_skill_found_rate": null,
+    "override_rate": null,
+    "confidence_brier": null,
+    "score_margin_avg": null
+  },
+  "latency_ms": {
+    "routing_p50": null,
+    "routing_p95": null,
+    "request_p50": null,
+    "request_p95": null
+  },
+  "execution": {
+    "success_rate": null,
+    "error_rate_by_class": {},
+    "retry_rate": null,
+    "timeout_rate": null
+  },
+  "scheduling": {
+    "schedule_due_rate": null,
+    "schedule_success_rate": null,
+    "schedule_failure_rate": null,
+    "schedule_lag_ms_p95": null,
+    "schedule_retry_rate": null
+  },
+  "cost": {
+    "tokens_per_request_avg": null,
+    "cost_per_request_avg_usd": null,
+    "budget_utilization_rate": null
+  },
+  "per_skill": {
+    "success_rate": {},
+    "avg_latency_ms": {},
+    "error_rate": {}
+  }
+}

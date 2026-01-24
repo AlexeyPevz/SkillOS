@@ -1,0 +1,10 @@
+id: travel/search_flights
+name: Search Flights
+description: Search flights for a trip
+version: 0.1.0
+entrypoint: implementations.travel.search_flights:run
+tags:
+- travel
+- flight
+- flights
+- search

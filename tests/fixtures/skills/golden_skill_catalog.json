@@ -1,0 +1,250 @@
+[
+  {
+    "id": "zakupki/search_tenders",
+    "name": "Search Tenders",
+    "description": "Search public procurement tenders.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.zakupki.search_tenders:run",
+    "tags": [
+      "tender",
+      "tenders",
+      "procurement",
+      "public",
+      "government",
+      "search",
+      "bids",
+      "construction"
+    ]
+  },
+  {
+    "id": "zakupki/analyze_document",
+    "name": "Analyze Document",
+    "description": "Analyze tender documents for requirements.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.zakupki.analyze_document:run",
+    "tags": [
+      "tender",
+      "document",
+      "analysis",
+      "analyze",
+      "requirements",
+      "deadline",
+      "pdf",
+      "summarize",
+      "eligibility",
+      "timeline"
+    ]
+  },
+  {
+    "id": "zakupki/check_requirements",
+    "name": "Check Requirements",
+    "description": "Check tender requirements and certifications.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.zakupki.check_requirements:run",
+    "tags": [
+      "requirements",
+      "certification",
+      "iso",
+      "bank",
+      "guarantee",
+      "revenue",
+      "eligibility",
+      "compliance"
+    ]
+  },
+  {
+    "id": "oysters/get_pricelist",
+    "name": "Get Pricelist",
+    "description": "Retrieve oyster price lists.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.oysters.get_pricelist:run",
+    "tags": [
+      "oyster",
+      "oysters",
+      "price",
+      "prices",
+      "pricelist",
+      "supplier",
+      "market"
+    ]
+  },
+  {
+    "id": "oysters/calculate_logistics",
+    "name": "Calculate Logistics",
+    "description": "Estimate shipping and logistics costs.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.oysters.calculate_logistics:run",
+    "tags": [
+      "logistics",
+      "shipping",
+      "delivery",
+      "cost",
+      "weight",
+      "kg",
+      "transport"
+    ]
+  },
+  {
+    "id": "oysters/calculate_margin",
+    "name": "Calculate Margin",
+    "description": "Calculate profit margin for oyster sales.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.oysters.calculate_margin:run",
+    "tags": [
+      "margin",
+      "profit",
+      "cost",
+      "price",
+      "sale"
+    ]
+  },
+  {
+    "id": "oysters/generate_quote",
+    "name": "Generate Quote",
+    "description": "Generate quotes for oyster orders.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.oysters.generate_quote:run",
+    "tags": [
+      "quote",
+      "client",
+      "delivery",
+      "shipping",
+      "kg",
+      "boxes",
+      "pricing"
+    ]
+  },
+  {
+    "id": "travel/search_flights",
+    "name": "Search Flights",
+    "description": "Search flights and airfare options.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.travel.search_flights:run",
+    "tags": [
+      "flight",
+      "flights",
+      "search",
+      "ticket",
+      "airfare",
+      "cheapest"
+    ]
+  },
+  {
+    "id": "travel/search_hotels",
+    "name": "Search Hotels",
+    "description": "Search hotel stays and accommodations.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.travel.search_hotels:run",
+    "tags": [
+      "hotel",
+      "hotels",
+      "search",
+      "stay",
+      "accommodation",
+      "room",
+      "star",
+      "city"
+    ]
+  },
+  {
+    "id": "travel/build_itinerary",
+    "name": "Build Itinerary",
+    "description": "Build travel itineraries and schedules.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.travel.build_itinerary:run",
+    "tags": [
+      "itinerary",
+      "plan",
+      "trip",
+      "travel",
+      "schedule",
+      "days",
+      "business"
+    ]
+  },
+  {
+    "id": "finance/get_exchange_rates",
+    "name": "Get Exchange Rates",
+    "description": "Fetch currency exchange rates.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.finance.get_exchange_rates:run",
+    "tags": [
+      "exchange",
+      "rate",
+      "rates",
+      "fx",
+      "usd",
+      "eur",
+      "gbp",
+      "rub"
+    ]
+  },
+  {
+    "id": "finance/convert_currency",
+    "name": "Convert Currency",
+    "description": "Convert between currencies.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.finance.convert_currency:run",
+    "tags": [
+      "convert",
+      "currency",
+      "exchange",
+      "usd",
+      "eur",
+      "rub",
+      "amount"
+    ]
+  },
+  {
+    "id": "finance/track_expenses",
+    "name": "Track Expenses",
+    "description": "Track expenses and summarize categories.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.finance.track_expenses:run",
+    "tags": [
+      "track",
+      "expenses",
+      "expense",
+      "budget",
+      "category",
+      "categories",
+      "summary",
+      "summarize"
+    ]
+  },
+  {
+    "id": "research/web_search",
+    "name": "Web Search",
+    "description": "Search the web for research topics.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.research.web_search:run",
+    "tags": [
+      "search",
+      "web",
+      "internet",
+      "find",
+      "research",
+      "market",
+      "trends",
+      "regulations",
+      "procurement"
+    ]
+  },
+  {
+    "id": "research/summarize_article",
+    "name": "Summarize Article",
+    "description": "Summarize articles and reports.",
+    "version": "1.0.0",
+    "entrypoint": "implementations.research.summarize_article:run",
+    "tags": [
+      "summarize",
+      "summary",
+      "article",
+      "report",
+      "brief",
+      "analysis",
+      "law",
+      "document"
+    ]
+  }
+]

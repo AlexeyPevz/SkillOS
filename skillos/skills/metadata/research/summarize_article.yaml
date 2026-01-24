@@ -1,0 +1,9 @@
+id: research/summarize_article
+name: Summarize Article
+description: Summarize an article into key points
+version: 0.1.0
+entrypoint: implementations.research.summarize_article:run
+tags:
+- research
+- summarize
+- summary

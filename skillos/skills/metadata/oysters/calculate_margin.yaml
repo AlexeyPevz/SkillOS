@@ -1,0 +1,9 @@
+id: oysters/calculate_margin
+name: Calculate Margin
+description: Calculate profit margin for oyster sales
+version: 0.1.0
+entrypoint: implementations.oysters.calculate_margin:run
+tags:
+- oysters
+- margin
+- profit
