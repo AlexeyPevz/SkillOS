@@ -1,79 +1,59 @@
-# Production Readiness Walkthrough
+﻿# Production Readiness Walkthrough
 
-This document summarizes the changes made to bring SkillOS MVP to a production-ready state.
+Краткий обзор изменений, которые доводят SkillOS до production-ready состояния.
 
-## 1. Security Hardening
+## 1. Безопасность
 
-### Attachment Limits
+### Лимиты вложений
 
-We introduced strict limits on attachment size and types to prevent DoS and arbitrary code execution via file uploads.
+- Максимальный размер: `SKILLOS_ATTACHMENT_MAX_SIZE_BYTES` (по умолчанию 10MB).
+- Разрешенные типы: `application/json`, `application/pdf`, `text/plain`, `text/csv`, `text/markdown`, `text/html`, `image/*`.
 
-- **File**: `skillos/attachments.py`
-- **Limits**:
-  - Max Size: 10MB (configurable via `SKILLOS_ATTACHMENT_MAX_SIZE_BYTES`)
-  - Allowed Types: `application/json`, `application/pdf`, `text/plain`, `text/csv`, `image/*`
+### JWT
 
-### Strict JWT Verification
+В проде (`SKILLOS_ENV=prod`) запрещены неподписанные токены независимо от флагов.
 
-In production environments (`SKILLOS_ENV=prod`), we now forcibly disable `allow_unverified` tokens, ignoring configuration that might relax security.
+### Вебхуки
 
-- **File**: `skillos/jwt_auth.py`
-- **Logic**: If `SKILLOS_ENV` is `prod` `dev` flags are overridden to ensure `verify=True`.
+- Подпись HMAC обязательна по умолчанию.
+- Опционально можно разрешить unsigned: `SKILLOS_WEBHOOK_ALLOW_UNSIGNED=1`.
 
-### Rate Limiting
+### Rate limiting
 
-A generic rate limiting module was added and integrated into Webhooks.
+- Best-effort режим доступен без Redis.
+- Strict режим (`SKILLOS_RATE_LIMIT_STRICT=1`) использует Redis + атомарный Lua.
+- Ключи scoped по tenant: `tenant:{tenant_id}:webhook:{trigger_id}`.
 
-- **File**: `skillos/rate_limit.py`
-- **Integration**: `skillos/webhooks.py`
-- **Key**: Tenant-scoped keys `tenant:{tenant_id}:webhook:{trigger_id}` to prevent cross-tenant noisy neighbor issues.
-- **Fallback**: Works in-memory even if global cache is disabled.
+## 2. Надежность
 
-## 2. Reliability Engineering
+### DLQ Recovery
 
-### Dead Letter Queue (DLQ) Recovery
+Метод `requeue_dead_letters` переводит `failed` задания обратно в `queued` и увеличивает `max_retries`.
 
-Added a mechanism to recover "failed" jobs back to "queued" state for manual or automated recovery.
+### Порядок бюджетных проверок
 
-- **File**: `skillos/jobs.py`
-- **Method**: `JobStore.requeue_dead_letters(max_retries_bump=1)`
-- **Behavior**: Resets status to `queued` and increments `max_retries` so the job allows one more attempt.
+Бюджет списывается только после Permission/Approval/Circuit, чтобы не списывать за запрещенные запросы.
 
-### Budget Logic Audit
+### Circuit Breaker
 
-Confirmed that budget deduction happens *after* all security checks (Permissions, Approvals, Circuit Breakers), ensuring users are not charged for blocked requests.
+Запись состояния теперь защищена файловым локом при параллельном исполнении.
 
-- **Pipeline Order**: Permissions -> Approvals -> Circuit -> Budget.
+## 3. Операционная готовность
 
-## 3. Operational Readiness
+### Health checks
 
-### Health Checks
+`/health` возвращает `healthy|degraded|unhealthy` и выставляет HTTP 503 при `unhealthy`.
+Проверки включают диск, базу и кэш.
 
-New module `skillos/health.py` provides checks for:
+### Централизованный config
 
-- Disk Space (<100MB warning)
-- Database (SQL generic check)
-- Redis Cache (Read/Write check)
-- **Endpoint**: `/health` now returns HTTP 503 if system is unhealthy.
+`skillos/config.py` — единая точка чтения ключевых env-настроек.
 
-### Centralized Config
+## 4. Тестовая инфраструктура
 
-New module `skillos/config.py` centralizes environment validation for critical settings (Postgres DSN, Redis URL, Log Level).
+Фикстуры генерируют dummy-реализации для entrypoint'ов из `golden_skill_catalog.json`.
 
-## 4. Real-World Behavior (Fixtures)
+## Валидация
 
-### Fixture Alignment
-
-We updated `tests/conftest.py` to auto-generate dummy implementation files for skills defined in `golden_skill_catalog.json`.
-
-- **Problem**: Tests defined metadata for skills but no Python code, causing runtime `ImportError` when `SkillRegistry` tried to load them.
-- **Fix**: `write_skill_catalog` fixture now generates a minimal `.py` file with a `run()` function for every entrypoint defined in the catalog.
-
-## Verification
-
-- **Security Tests**: `pytest tests/unit/test_security_hardening.py` (Passed)
-- **DLQ Tests**: `pytest tests/unit/test_jobs_dlq.py` (Passed)
-- **Critical Fixes**:
-  - Fixed syntax error in `webhooks.py`.
-  - Fixed SQLite lock issue in `jobs.py`.
-  - Fixed `pytest.ANY` attribute error.
+- `pytest -q` — все тесты проходят локально.
+- Основные кейсы: security, DLQ, вебхуки, пайплайны, health.
