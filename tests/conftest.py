@@ -2,6 +2,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
+import os
+
+# Add project root to sys.path so 'skillos' package is resolvable
+project_root = str(Path(__file__).parent.parent.resolve())
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 import asyncio
 import inspect
