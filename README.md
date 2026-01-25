@@ -43,6 +43,8 @@ SkillOS дает единый слой оркестрации и контрол�
 
 - **Маршрутизация запросов** к навыкам (keyword/vector/hybrid, веса).
 - **Композиции** и **пайплайны** с параллельными группами.
+- **Zero-YAML SDK**: декоратор `@skill` и авто‑дискавери Python‑навыков.
+- **SkillFlow**: циклы и state‑machine для многошаговых навыков.
 - **Политики доступа** (roles/permissions) и **утверждения**.
 - **Бюджетирование** и контроль затрат.
 - **Вебхуки** с проверкой подписи и вложениями.
@@ -87,6 +89,50 @@ poetry run skillos run "Find flights to Sochi" --root ./skills
 
 ```bash
 poetry run uvicorn skillos.api:app --host 0.0.0.0 --port 8000
+```
+
+## Dev Mode и Zero‑YAML
+
+Создай файл `skills/implementations/hello.py`:
+
+```python
+from skillos.sdk import skill
+
+@skill(name="hello", description="Simple greeting")
+def hello(payload: str):
+    return f"Hello, {payload}"
+```
+
+Запусти без YAML и внешних зависимостей:
+
+```python
+from skillos.orchestrator import Orchestrator
+
+output = Orchestrator.run_simple("hello", "./skills")
+print(output)
+```
+
+### SkillFlow (циклы и state‑machine)
+
+```python
+from skillos.flow import SkillFlow
+
+flow = SkillFlow("counter")
+
+@flow.start
+def start(state):
+    state["count"] = state.get("count", 0) + 1
+    return state
+
+def loop_condition(state):
+    if state["count"] < 3:
+        return "start"
+    return "__end__"
+
+flow.add_edge("start", loop_condition)
+
+result = flow.run({"count": 0})
+print(result["count"])  # 3
 ```
 
 ## Архитектура и структура каталога

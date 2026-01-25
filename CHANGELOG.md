@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
 
 ## [Unreleased]
+### Added
+- Zero-YAML SDK decorator (@skill) with auto-discovery from implementations/.
+- SkillFlow for cyclic/stateful skill execution.
+- Dev-mode convenience runner Orchestrator.run_simple.
+- Integration tests for relative imports and dev-mode execution.
+
+### Changed
+- Skill registry loads modules via importlib and initializes package parents for reliable relative imports.
+- Walkthrough updated with Zero-YAML, dev-mode, and import stability details.
+
+### Fixed
+- Dev-mode logging no longer crashes on mock serialization.
+- Module cache cleanup on failed skill loads to prevent poisoning.
 
 ## [0.1.0] - 2026-01-24
 ### Added
