@@ -5,6 +5,26 @@ on:
   pull_request:
 
 jobs:
+  tests-session:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Poetry
+        run: pip install poetry
+      - name: Install deps
+        run: poetry install
+      - name: Run session-focused tests
+        run: >
+          poetry run pytest -q
+          tests/unit/test_session_store.py
+          tests/unit/test_local_execution_kernel.py
+          tests/unit/test_session_compaction.py
+          tests/unit/test_skill_eval.py
+          tests/integration/test_session_flow.py
+
   tests-file:
     runs-on: ubuntu-latest
     steps:

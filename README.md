@@ -137,7 +137,7 @@ print(result["count"])  # 3
 
 ## Архитектура и структура каталога
 
-```
+```text
 skills/
   metadata/         # YAML-описания навыков
   implementations/  # Python-реализации навыков
@@ -209,6 +209,7 @@ curl -X POST http://localhost:8000/run \
 ```
 
 Ограничения:
+
 - Допустимые content-type: `application/json`, `application/pdf`, `text/plain`, `text/csv`, `text/markdown`, `text/html`, `image/*`.
 - Максимальный размер: `SKILLOS_ATTACHMENT_MAX_SIZE_BYTES` (по умолчанию 10MB).
 
