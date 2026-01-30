@@ -7,8 +7,7 @@ from click.testing import CliRunner
 from skillos.cli import cli
 from skillos.suggestions import (
     SuggestionPreferences,
-    SuggestionPreferencesStore,
-    default_preferences_path,
+    preferences_store_from_env,
 )
 
 
@@ -32,7 +31,7 @@ def test_cli_suggestions_dismissal_reduces_frequency() -> None:
             ),
             encoding="utf-8",
         )
-        preferences_store = SuggestionPreferencesStore(default_preferences_path(root))
+        preferences_store = preferences_store_from_env(root)
         preferences_store.save(
             SuggestionPreferences(
                 opt_in=True,

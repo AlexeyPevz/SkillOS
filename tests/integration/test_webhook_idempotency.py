@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import time
 
-from skillos.jobs import JobStore, default_jobs_db_path
+from skillos.jobs import job_store_from_env
 from skillos.skills.scaffold import scaffold_skill
 from skillos.telemetry import default_log_path
 from skillos.webhooks import (
@@ -60,7 +60,7 @@ def test_webhook_idempotency_skips_duplicates(
     assert first.status == "enqueued"
     assert second.status == "skipped"
 
-    store = JobStore(default_jobs_db_path(root))
+    store = job_store_from_env(root)
     jobs = store.list_all()
     assert len(jobs) == 1
 

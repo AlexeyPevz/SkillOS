@@ -5,7 +5,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from skillos.cli import cli
-from skillos.schedules import ScheduleStore, build_schedule, default_schedules_path
+from skillos.schedules import build_schedule, schedule_store_from_env
 from skillos.skills.scaffold import scaffold_skill
 from skillos.telemetry import default_log_path
 
@@ -17,7 +17,7 @@ def test_schedule_tick_emits_pipeline_events() -> None:
         root = Path("skills_root")
         scaffold_skill("ops/sample", root)
         run_at = datetime.now(timezone.utc) - timedelta(minutes=1)
-        store = ScheduleStore(default_schedules_path(root))
+        store = schedule_store_from_env(root)
         store.save([build_schedule("ops/sample", run_at)])
 
         result = runner.invoke(

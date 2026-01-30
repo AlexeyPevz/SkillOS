@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 import os
 import re
 from pathlib import Path
@@ -41,7 +42,14 @@ def require_postgres_dsn(config: StorageBackendConfig, *, context: str) -> str:
 
 
 def resolve_tenant_id(root: Path) -> str:
-    return tenant_id_from_path(root) or tenant_id_from_env() or "default"
+    tenant_id = tenant_id_from_path(root) or tenant_id_from_env()
+    if tenant_id:
+        return tenant_id
+    test_id = os.getenv("PYTEST_CURRENT_TEST")
+    if test_id:
+        digest = hashlib.blake2b(test_id.encode("utf-8"), digest_size=6).hexdigest()
+        return f"test-{digest}"
+    return "default"
 
 
 def pg_connect(dsn: str):
