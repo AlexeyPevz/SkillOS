@@ -77,7 +77,7 @@ flowchart LR
 Через pip (после публикации в PyPI):
 
 ```bash
-python -m pip install skillos
+python -m pip install skillos-ai
 skillos --help
 ```
 
