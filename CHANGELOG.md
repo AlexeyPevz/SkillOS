@@ -8,6 +8,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ### Added
 - Placeholder for upcoming changes.
 
+## [0.2.1] - 2026-01-30
+### Added
+- PyPI publish workflow triggered on version tags.
+- GitHub Release workflow with release notes lookup.
+
 ## [0.2.0] - 2026-01-30
 ### Added
 - Session manager with SQLite storage, API endpoints, and session-aware orchestration.

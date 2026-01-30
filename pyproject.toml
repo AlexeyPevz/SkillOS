@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "skillos"
-version = "0.2.0"
+version = "0.2.1"
 description = "SkillOS MVP scaffold"
 authors = ["Alexey"]
 readme = "README.md"
