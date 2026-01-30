@@ -2,6 +2,7 @@ import asyncio
 import contextvars
 from datetime import datetime, timezone
 from pathlib import Path
+import os
 import time
 from typing import Optional, Dict, Any, List
 from unittest.mock import MagicMock
@@ -53,6 +54,22 @@ from skillos.tool_wrapper import ToolWrapper
 
 _CALL_STACK: contextvars.ContextVar[List[str]] = contextvars.ContextVar("_CALL_STACK", default=[])
 MAX_CALL_DEPTH = 10
+
+_SESSION_MAX_TOKENS = 2000
+_SESSION_KEEP_LAST = 12
+_SESSION_RECENT_MESSAGES = 6
+_SESSION_SUMMARY_MAX_CHARS = 1200
+_SESSION_SUMMARY_KEY = "history_summary"
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return int(str(raw).strip())
+    except ValueError:
+        return default
 
 
 class Orchestrator:
@@ -199,6 +216,7 @@ class Orchestrator:
         mode: str | None = None,
         plan_path: Optional[Path] = None,
         debug_trace: Optional[DebugTrace] = None,
+        session_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         self._maybe_reload_registry()
         if not self.dev_mode:
@@ -214,12 +232,40 @@ class Orchestrator:
             debug_trace=debug_trace,
         )
 
+        # Session Management
+        session_store = None
+        session = None
+        session_context = None
+        subject = None
+        if attributes:
+            subject = attributes.get("subject")
+            if subject is not None:
+                subject = str(subject).strip() or None
+        if session_id:
+            from skillos.session.store import SessionStore
+            session_store = SessionStore(self.root_path)
+            session = session_store.get_session(session_id)
+            if not session:
+                session = session_store.create_session(session_id=session_id, user_id=subject)
+            elif subject:
+                if session.user_id and session.user_id != subject:
+                    raise PermissionError("session_forbidden")
+                if session.user_id is None:
+                    session.user_id = subject
+            
+            session.add_message("user", query)
+            self._compact_session(session)
+            session_context = self._build_session_context(session)
+            session_store.save_session(session)
+
+
         normalized_mode = (mode or "single").strip().lower()
         segments = split_query(query, normalized_mode)
         if normalized_mode in {"pipeline", "parallel", "auto"} and len(segments) > 1:
-            return self._run_multi(
+            response = self._run_multi(
                 segments,
                 normalized_mode,
+                payload=query,
                 execute=execute,
                 dry_run=dry_run,
                 approval=approval,
@@ -231,7 +277,9 @@ class Orchestrator:
                 request_id=request_id,
                 debug_trace=debug_trace,
                 request_start=request_start,
+                session_context=session_context,
             )
+            return self._finalize_session_response(response, session, session_store)
 
         # 1. Routing
         result = self._route_query(
@@ -243,10 +291,12 @@ class Orchestrator:
         )
 
         if result.status == "no_skill_found":
-            return self._handle_no_skill_found(logger, debug_trace, request_start)
+            response = self._handle_no_skill_found(logger, debug_trace, request_start)
+            return self._finalize_session_response(response, session, session_store)
 
         if result.status == "low_confidence":
-            return self._handle_low_confidence(result, logger, debug_trace, request_start)
+            response = self._handle_low_confidence(result, logger, debug_trace, request_start)
+            return self._finalize_session_response(response, session, session_store)
 
         # 2. Plan Creation
         plan, metadata, skill_selected = self._prepare_plan(
@@ -257,7 +307,7 @@ class Orchestrator:
             execute=execute,
             dry_run=dry_run,
         )
-        return self.execute_plan(
+        response = self.execute_plan(
             plan,
             execute=execute,
             dry_run=dry_run,
@@ -272,7 +322,10 @@ class Orchestrator:
             warnings=warnings,
             metadata=metadata,
             skill_selected=skill_selected,
+            session_context=session_context,
         )
+
+        return self._finalize_session_response(response, session, session_store)
 
     async def run_query_async(
         self,
@@ -288,6 +341,7 @@ class Orchestrator:
         mode: str | None = None,
         plan_path: Optional[Path] = None,
         debug_trace: Optional[DebugTrace] = None,
+        session_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         self._maybe_reload_registry()
         if not self.dev_mode:
@@ -303,12 +357,40 @@ class Orchestrator:
             debug_trace=debug_trace,
         )
 
+        # Session Management
+        session_store = None
+        session = None
+        session_context = None
+        subject = None
+        if attributes:
+            subject = attributes.get("subject")
+            if subject is not None:
+                subject = str(subject).strip() or None
+        if session_id:
+            from skillos.session.store import SessionStore
+            session_store = SessionStore(self.root_path)
+            session = session_store.get_session(session_id)
+            if not session:
+                session = session_store.create_session(session_id=session_id, user_id=subject)
+            elif subject:
+                if session.user_id and session.user_id != subject:
+                    raise PermissionError("session_forbidden")
+                if session.user_id is None:
+                    session.user_id = subject
+            
+            session.add_message("user", query)
+            self._compact_session(session)
+            session_context = self._build_session_context(session)
+            session_store.save_session(session)
+
+
         normalized_mode = (mode or "single").strip().lower()
         segments = split_query(query, normalized_mode)
         if normalized_mode in {"pipeline", "parallel", "auto"} and len(segments) > 1:
-            return await self._run_multi_async(
+            response = await self._run_multi_async(
                 segments,
                 normalized_mode,
+                payload=query,
                 execute=execute,
                 dry_run=dry_run,
                 approval=approval,
@@ -320,7 +402,9 @@ class Orchestrator:
                 request_id=request_id,
                 debug_trace=debug_trace,
                 request_start=request_start,
+                session_context=session_context,
             )
+            return self._finalize_session_response(response, session, session_store)
 
         result = await self._route_query_async(
             query,
@@ -331,11 +415,14 @@ class Orchestrator:
         )
 
         if result.status == "no_skill_found":
-            return self._handle_no_skill_found(logger, debug_trace, request_start)
+            response = self._handle_no_skill_found(logger, debug_trace, request_start)
+            return self._finalize_session_response(response, session, session_store)
 
         if result.status == "low_confidence":
-            return self._handle_low_confidence(result, logger, debug_trace, request_start)
+            response = self._handle_low_confidence(result, logger, debug_trace, request_start)
+            return self._finalize_session_response(response, session, session_store)
 
+        # 2. Plan Creation
         plan, metadata, skill_selected = self._prepare_plan(
             result,
             query,
@@ -344,7 +431,7 @@ class Orchestrator:
             execute=execute,
             dry_run=dry_run,
         )
-        return await self.execute_plan_async(
+        response = await self.execute_plan_async(
             plan,
             execute=execute,
             dry_run=dry_run,
@@ -359,7 +446,10 @@ class Orchestrator:
             warnings=warnings,
             metadata=metadata,
             skill_selected=skill_selected,
+            session_context=session_context,
         )
+
+        return self._finalize_session_response(response, session, session_store)
 
     def execute_plan(
         self,
@@ -378,6 +468,7 @@ class Orchestrator:
         warnings: list[dict[str, object]] | None = None,
         metadata=None,
         skill_selected: dict[str, object] | None = None,
+        session_context: dict[str, object] | None = None,
     ) -> Dict[str, Any]:
         warnings_list = list(warnings) if warnings else []
         if metadata is None:
@@ -432,7 +523,12 @@ class Orchestrator:
                 )
              
             with trace_step(debug_trace, "execution", inputs={"dry_run": True}) as trace_output:
-                result_preview = execute_plan(self.registry, plan, dry_run=True)
+                result_preview = execute_plan(
+                    self.registry,
+                    plan,
+                    dry_run=True,
+                    session_context=session_context,
+                )
                 preview = result_preview.preview
                 trace_output.update({"executed": result_preview.executed})
 
@@ -531,6 +627,7 @@ class Orchestrator:
                 attributes=attributes,
                 approval=approval,
                 approval_token=approval_token,
+                session_context=session_context,
             )
             return {
                 "status": "success",
@@ -570,6 +667,75 @@ class Orchestrator:
             request_payload["query"] = query
         logger.log("request_received", **request_payload)
         return request_start, request_id, logger, warnings
+
+    def _session_limits(self) -> dict[str, int]:
+        return {
+            "max_tokens": _env_int("SKILLOS_SESSION_MAX_TOKENS", _SESSION_MAX_TOKENS),
+            "keep_last": _env_int("SKILLOS_SESSION_KEEP_LAST", _SESSION_KEEP_LAST),
+            "recent_messages": _env_int(
+                "SKILLOS_SESSION_RECENT_MESSAGES", _SESSION_RECENT_MESSAGES
+            ),
+            "summary_max_chars": _env_int(
+                "SKILLOS_SESSION_SUMMARY_MAX_CHARS", _SESSION_SUMMARY_MAX_CHARS
+            ),
+        }
+
+    def _summarize_messages(self, messages, max_chars: int) -> str:
+        lines: list[str] = []
+        for message in messages:
+            content = str(message.content).strip().replace("\n", " ")
+            if len(content) > 160:
+                content = f"{content[:157]}..."
+            lines.append(f"{message.role}: {content}")
+        summary = " | ".join(line for line in lines if line)
+        if len(summary) > max_chars:
+            summary = summary[-max_chars:]
+        return summary
+
+    def _compact_session(self, session) -> None:
+        limits = self._session_limits()
+        keep_last = max(1, limits["keep_last"])
+        max_tokens = max(1, limits["max_tokens"])
+        total_tokens = sum(token_count(msg.content) for msg in session.messages)
+        if total_tokens <= max_tokens:
+            return
+        if len(session.messages) <= keep_last:
+            return
+
+        to_summarize = session.messages[:-keep_last]
+        summary = self._summarize_messages(
+            to_summarize,
+            limits["summary_max_chars"],
+        )
+        if summary:
+            existing = session.context.get(_SESSION_SUMMARY_KEY)
+            if existing:
+                combined = f"{existing}\n{summary}"
+            else:
+                combined = summary
+            if len(combined) > limits["summary_max_chars"]:
+                combined = combined[-limits["summary_max_chars"]:]
+            session.context[_SESSION_SUMMARY_KEY] = combined
+        session.messages = session.messages[-keep_last:]
+
+    def _build_session_context(self, session) -> dict[str, object]:
+        limits = self._session_limits()
+        recent_count = max(0, limits["recent_messages"])
+        recent_messages = session.messages[-recent_count:] if recent_count else []
+        return {
+            "session_id": session.id,
+            "user_id": session.user_id,
+            "context": dict(session.context),
+            "summary": session.context.get(_SESSION_SUMMARY_KEY),
+            "recent_messages": [
+                {
+                    "role": msg.role,
+                    "content": msg.content,
+                    "timestamp": msg.timestamp.isoformat(),
+                }
+                for msg in recent_messages
+            ],
+        }
 
     def _maybe_reload_registry(self) -> None:
         records = self.registry.reload_if_changed()
@@ -735,6 +901,7 @@ class Orchestrator:
         attributes: dict[str, object] | None = None,
         approval: Optional[str] = None,
         approval_token: Optional[str] = None,
+        session_context: dict[str, object] | None = None,
     ) -> str | None:
         internal_id = plan.internal_skill_id
         stack = _CALL_STACK.get()
@@ -756,6 +923,7 @@ class Orchestrator:
                     attributes=attributes,
                     approval_status=approval,
                     approval_token=approval_token,
+                    session_context=session_context,
                     charge_budget=False,
                 )
                 trace_output.update(
@@ -858,6 +1026,7 @@ class Orchestrator:
         warnings: list[dict[str, object]] | None = None,
         metadata=None,
         skill_selected: dict[str, object] | None = None,
+        session_context: dict[str, object] | None = None,
     ) -> Dict[str, Any]:
         return await asyncio.to_thread(
             self.execute_plan,
@@ -875,6 +1044,7 @@ class Orchestrator:
             warnings=warnings,
             metadata=metadata,
             skill_selected=skill_selected,
+            session_context=session_context,
         )
     def _collect_deprecation_warning(
         self,
@@ -903,6 +1073,7 @@ class Orchestrator:
         segments: list[str],
         mode: str,
         *,
+        payload: str,
         execute: bool,
         dry_run: bool,
         approval: Optional[str],
@@ -914,6 +1085,7 @@ class Orchestrator:
         request_id: str,
         debug_trace: Optional[DebugTrace],
         request_start: float,
+        session_context: dict[str, object] | None,
     ) -> Dict[str, Any]:
         if dry_run:
             return {
@@ -975,12 +1147,13 @@ class Orchestrator:
             steps = step_ids
         pipeline_result = runner.run(
             steps,
-            payload=query,
+            payload=payload,
             approval_status=approval,
             approval_token=approval_token,
             role=role,
             attributes=attributes,
             request_id=request_id,
+            session_context=session_context,
         )
         if pipeline_result.status == "blocked":
             return {
@@ -1007,6 +1180,7 @@ class Orchestrator:
         segments: list[str],
         mode: str,
         *,
+        payload: str,
         execute: bool,
         dry_run: bool,
         approval: Optional[str],
@@ -1018,6 +1192,7 @@ class Orchestrator:
         request_id: str,
         debug_trace: Optional[DebugTrace],
         request_start: float,
+        session_context: dict[str, object] | None,
     ) -> Dict[str, Any]:
         if dry_run:
             return {
@@ -1075,12 +1250,13 @@ class Orchestrator:
             steps = step_ids
         pipeline_result = await runner.run_async(
             steps,
-            payload=query,
+            payload=payload,
             approval_status=approval,
             approval_token=approval_token,
             role=role,
             attributes=attributes,
             request_id=request_id,
+            session_context=session_context,
         )
         if pipeline_result.status == "blocked":
             return {
@@ -1120,3 +1296,17 @@ class Orchestrator:
         duration = (time.perf_counter() - start_time) * 1000
         logger.log("execution_result", status="blocked", error_class=reason, duration_ms=duration)
         return {"status": "blocked", "reason": reason, "policy_id": policy_id}
+
+    def _finalize_session_response(
+        self,
+        response: Dict[str, Any],
+        session,
+        session_store,
+    ) -> Dict[str, Any]:
+        if session and session_store:
+            if response.get("status") == "success":
+                session.add_message("assistant", response.get("output", ""))
+            self._compact_session(session)
+            session_store.save_session(session)
+            response["session_id"] = session.id
+        return response

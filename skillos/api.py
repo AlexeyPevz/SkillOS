@@ -54,6 +54,7 @@ class RunRequest(BaseModel):
     role: str | None = None
     tags: list[str] | None = None
     mode: str | None = None
+    session_id: str | None = None
 
 
 class ValidateRequest(BaseModel):
@@ -95,6 +96,36 @@ class RunResponse(BaseModel):
     plan_path: str | None = None
     policy_id: str | None = None
     warnings: list[dict[str, object]] | None = None
+    session_id: str | None = None
+
+
+class EvalCaseResponse(BaseModel):
+    input: str
+    expected: str | None = None
+    match: str
+    passed: bool
+    output: str
+    details: str | None = None
+
+
+class EvalResponse(BaseModel):
+    skill_id: str
+    total: int
+    passed: int
+    success_rate: float
+    pass_threshold: float
+    ok: bool
+    cases: list[EvalCaseResponse]
+    eval_path: str | None = None
+
+
+def _subject_from_attributes(attributes: dict[str, object] | None) -> str | None:
+    if not attributes:
+        return None
+    subject = attributes.get("subject")
+    if subject is None:
+        return None
+    return str(subject).strip() or None
 
 
 @app.get("/health")
@@ -125,6 +156,14 @@ async def run_query(
         authorization=authorization,
         role=request.role,
     )
+    subject = _subject_from_attributes(attributes)
+
+    if request.session_id and subject:
+        from skillos.session.store import SessionStore
+        store = SessionStore(root_path)
+        session = store.get_session(request.session_id)
+        if session and session.user_id != subject:
+            raise HTTPException(status_code=403, detail="session_forbidden")
 
     orchestrator = get_cached_orchestrator(Path(root_path))
     try:
@@ -138,7 +177,10 @@ async def run_query(
             attributes=attributes,
             tags=request.tags,
             mode=request.mode,
+            session_id=request.session_id,
         )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -155,6 +197,55 @@ async def run_query(
         result["plan_path"] = str(result["plan_path"])
 
     return RunResponse(**result)
+
+
+@app.post("/sessions", response_model=dict[str, str])
+async def create_session(
+    authorization: str | None = Header(default=None),
+) -> dict[str, str]:
+    root_path = resolve_skills_root()
+    root_path, _, attributes = _resolve_auth_context(
+        root_path,
+        authorization=authorization,
+        role=None,
+    )
+    subject = _subject_from_attributes(attributes)
+    
+    from skillos.session.store import SessionStore
+    store = SessionStore(root_path)
+    session = store.create_session(user_id=subject)
+    return {"session_id": session.id}
+
+
+@app.get("/sessions/{session_id}/history")
+async def get_session_history(
+    session_id: str,
+    authorization: str | None = Header(default=None),
+) -> dict[str, Any]:
+    root_path = resolve_skills_root()
+    root_path, _, attributes = _resolve_auth_context(
+        root_path,
+        authorization=authorization,
+        role=None,
+    )
+    subject = _subject_from_attributes(attributes)
+    
+    from skillos.session.store import SessionStore
+    store = SessionStore(root_path)
+    session = store.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="session_not_found")
+    if session.user_id:
+        if not subject or session.user_id != subject:
+            raise HTTPException(status_code=403, detail="session_forbidden")
+    elif subject:
+        raise HTTPException(status_code=403, detail="session_forbidden")
+    
+    return {
+        "session_id": session.id,
+        "messages": [m.dict() for m in session.messages],
+        "context": session.context
+    }
 
 
 # --- Orchestrator Caching ---
@@ -251,6 +342,55 @@ async def undeprecate_skill_endpoint(
         status="undeprecated",
         skill_id=skill_id,
         deprecated=False,
+    )
+
+
+@app.post("/skills/{skill_id:path}/eval", response_model=EvalResponse)
+async def eval_skill_endpoint(
+    skill_id: str,
+    authorization: str | None = Header(default=None),
+    save: bool = False,
+) -> EvalResponse:
+    root_path = resolve_skills_root()
+    root_path, _, _ = _resolve_auth_context(
+        root_path,
+        authorization=authorization,
+        role=None,
+    )
+    try:
+        from skillos.skills.eval import run_skill_eval, save_eval_result, SkillEvalError
+
+        result = await asyncio.to_thread(run_skill_eval, skill_id, Path(root_path))
+    except SkillEvalError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    eval_path = None
+    if save:
+        eval_path = str(
+            await asyncio.to_thread(save_eval_result, result, Path(root_path))
+        )
+
+    return EvalResponse(
+        skill_id=result.skill_id,
+        total=result.total,
+        passed=result.passed,
+        success_rate=result.success_rate,
+        pass_threshold=result.pass_threshold,
+        ok=result.ok,
+        cases=[
+            EvalCaseResponse(
+                input=case.input,
+                expected=case.expected,
+                match=case.match,
+                passed=case.passed,
+                output=case.output,
+                details=case.details,
+            )
+            for case in result.cases
+        ],
+        eval_path=eval_path,
     )
 
 

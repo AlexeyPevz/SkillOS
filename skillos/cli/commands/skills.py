@@ -16,7 +16,21 @@ from skillos.skills.validation import validate_skills
     default=default_skills_root(),
     show_default=True,
 )
-def add_skill(skill_id: str, root_path: Path) -> None:
+@click.option("--eval/--no-eval", "run_eval", default=False, show_default=True)
+@click.option("--eval-required", is_flag=True, default=False)
+@click.option(
+    "--eval-output",
+    "eval_output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+)
+def add_skill(
+    skill_id: str,
+    root_path: Path,
+    run_eval: bool,
+    eval_required: bool,
+    eval_output: Path | None,
+) -> None:
     """Scaffold a new skill."""
     try:
         from skillos.skills.scaffold import scaffold_skill
@@ -27,6 +41,21 @@ def add_skill(skill_id: str, root_path: Path) -> None:
         raise click.ClickException(str(exc)) from exc
 
     click.echo(f"Created {metadata_file} and {implementation_file}")
+
+    if run_eval:
+        try:
+            from skillos.skills.eval import run_skill_eval, save_eval_result, SkillEvalError
+
+            result = run_skill_eval(skill_id, root_path)
+            saved_path = save_eval_result(result, root_path, output_path=eval_output)
+            click.echo(f"eval_success_rate: {result.success_rate}")
+            click.echo(f"eval_saved: {saved_path}")
+            if not result.ok:
+                raise click.ClickException("eval_failed")
+        except SkillEvalError as exc:
+            if eval_required:
+                raise click.ClickException(str(exc)) from exc
+            click.echo(f"eval_skipped: {exc}")
 
 
 @click.command("deprecate-skill")
@@ -172,3 +201,54 @@ def test_skill(
 
     click.echo(result.output)
     click.echo(f"coverage_written: {result.coverage_path}")
+
+
+@click.command("eval-skill")
+@click.argument("skill_id")
+@click.option(
+    "--root",
+    "root_path",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=default_skills_root(),
+    show_default=True,
+)
+@click.option("--fail-on-threshold/--no-fail-on-threshold", default=True, show_default=True)
+@click.option(
+    "--output",
+    "output_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+)
+@click.option("--save/--no-save", default=True, show_default=True)
+def eval_skill(
+    skill_id: str,
+    root_path: Path,
+    fail_on_threshold: bool,
+    output_path: Path | None,
+    save: bool,
+) -> None:
+    """Run eval cases defined in skill metadata."""
+    try:
+        from skillos.skills.eval import run_skill_eval, save_eval_result, SkillEvalError
+
+        result = run_skill_eval(skill_id, root_path)
+    except (KeyError, SkillEvalError) as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    saved_path = None
+    if save:
+        saved_path = save_eval_result(result, root_path, output_path=output_path)
+
+    click.echo(f"success_rate: {result.success_rate}")
+    click.echo(f"pass_threshold: {result.pass_threshold}")
+    click.echo(f"status: {'ok' if result.ok else 'failed'}")
+    if saved_path:
+        click.echo(f"eval_saved: {saved_path}")
+    failed = [case for case in result.cases if not case.passed]
+    if failed:
+        for case in failed:
+            click.echo(
+                f"failed_case: input={case.input} match={case.match} details={case.details}"
+            )
+    if fail_on_threshold and not result.ok:
+        raise click.ClickException("eval_failed")

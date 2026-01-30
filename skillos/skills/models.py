@@ -5,6 +5,45 @@ import re
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
+class SkillEvalCase(BaseModel):
+    input: str
+    expected: str | None = None
+    match: str = Field(default="equals")
+    range: tuple[float, float] | None = None
+    group: int | None = None
+
+    @model_validator(mode="after")
+    def validate_case(self) -> "SkillEvalCase":
+        match = self.match.strip().lower()
+        self.match = match
+        if match == "numeric_range":
+            if self.range is None:
+                raise ValueError("eval case requires range for numeric_range matcher")
+        elif match == "regex_numeric":
+            if self.expected is None:
+                raise ValueError("eval case requires expected for regex_numeric matcher")
+            if self.range is None:
+                raise ValueError("eval case requires range for regex_numeric matcher")
+            if self.group is not None and self.group < 0:
+                raise ValueError("eval case group must be >= 0")
+        elif match in {"equals", "contains", "regex"}:
+            if self.expected is None:
+                raise ValueError("eval case requires expected for matcher")
+        else:
+            raise ValueError(
+                "eval case matcher must be equals|contains|regex|numeric_range|regex_numeric"
+            )
+        return self
+
+
+class SkillEvalConfig(BaseModel):
+    cases: list[SkillEvalCase] = Field(default_factory=list)
+    pass_threshold: float = Field(default=1.0, ge=0.0, le=1.0)
+    max_cases: int | None = Field(default=None, ge=1)
+    timeout_seconds: float | None = Field(default=None, ge=0.0)
+    fail_fast: bool = Field(default=False)
+
+
 _SEMVER_RE = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
     r"(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$"
@@ -18,6 +57,8 @@ class SkillMetadata(BaseModel):
     version: str
     entrypoint: str
     tags: list[str] = Field(default_factory=list)
+    execution_mode: str = Field(default="local")
+    eval: SkillEvalConfig | None = None
     deprecated: bool = False
     deprecation_reason: str | None = None
     replacement_id: str | None = None

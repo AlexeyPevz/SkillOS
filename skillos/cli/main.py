@@ -32,6 +32,7 @@ COMMAND_MAPPING = {
     "run-skill": ("skillos.cli.commands.skills", "run_skill"),
     "validate": ("skillos.cli.commands.skills", "validate_command"),
     "test": ("skillos.cli.commands.skills", "test_skill"),
+    "eval-skill": ("skillos.cli.commands.skills", "eval_skill"),
     "deprecate-skill": ("skillos.cli.commands.skills", "deprecate_skill_command"),
     "undeprecate-skill": ("skillos.cli.commands.skills", "undeprecate_skill_command"),
 

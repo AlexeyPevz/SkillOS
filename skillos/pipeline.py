@@ -141,6 +141,7 @@ class PipelineRunner:
         role: str | None = None,
         attributes: dict[str, object] | None = None,
         request_id: str | None = None,
+        session_context: dict[str, object] | None = None,
     ) -> PipelineResult:
         self._maybe_reload_registry()
         normalized_steps = normalize_pipeline_steps(steps)
@@ -188,6 +189,7 @@ class PipelineRunner:
                     attributes=attributes,
                     approval_status=approval_status,
                     approval_token=approval_token,
+                    session_context=session_context,
                 )
                 step_results.append(step_result)
                 if step_result.status != "success":
@@ -211,6 +213,7 @@ class PipelineRunner:
                     order_index,
                     group_index,
                     warnings,
+                    session_context=session_context,
                 )
                 step_results.extend(group_result.steps)
                 if group_result.status != "success":
@@ -242,6 +245,7 @@ class PipelineRunner:
         role: str | None = None,
         attributes: dict[str, object] | None = None,
         request_id: str | None = None,
+        session_context: dict[str, object] | None = None,
     ) -> PipelineResult:
         self._maybe_reload_registry()
         normalized_steps = normalize_pipeline_steps(steps)
@@ -292,6 +296,7 @@ class PipelineRunner:
                         attributes=attributes,
                         approval_status=approval_status,
                         approval_token=approval_token,
+                        session_context=session_context,
                     )
                     step_results.append(step_result)
                     if step_result.status != "success":
@@ -315,6 +320,7 @@ class PipelineRunner:
                         order_index,
                         group_index,
                         warnings,
+                        session_context=session_context,
                     )
                     step_results.extend(group_result.steps)
                     if group_result.status != "success":
@@ -474,6 +480,7 @@ class PipelineRunner:
         approval_status: str | None,
         approval_token: str | None,
         pause: bool = True,
+        session_context: dict[str, object] | None = None,
     ) -> PipelineStepResult:
         start = time.perf_counter()
         try:
@@ -484,6 +491,7 @@ class PipelineRunner:
                 attributes=attributes,
                 approval_status=approval_status,
                 approval_token=approval_token,
+                session_context=session_context,
                 charge_budget=False,
             )
         except Exception as exc:
@@ -561,6 +569,7 @@ class PipelineRunner:
         approval_status: str | None,
         approval_token: str | None,
         pause: bool = True,
+        session_context: dict[str, object] | None = None,
     ) -> PipelineStepResult:
         start = time.perf_counter()
         try:
@@ -571,6 +580,7 @@ class PipelineRunner:
                 attributes=attributes,
                 approval_status=approval_status,
                 approval_token=approval_token,
+                session_context=session_context,
                 charge_budget=False,
             )
         except asyncio.CancelledError:
@@ -646,6 +656,7 @@ class PipelineRunner:
         order_index: int,
         group_index: int,
         warnings: list[dict[str, object]],
+        session_context: dict[str, object] | None = None,
     ) -> PipelineResult:
         step_results: list[PipelineStepResult] = []
         public_ids = [to_public_id(step_id) for step_id in group]
@@ -691,6 +702,7 @@ class PipelineRunner:
                     approval_status=approval_status,
                     approval_token=approval_token,
                     pause=False,
+                    session_context=session_context,
                 )
                 future_map[future] = offset
             for future in as_completed(future_map):
@@ -735,6 +747,7 @@ class PipelineRunner:
         order_index: int,
         group_index: int,
         warnings: list[dict[str, object]],
+        session_context: dict[str, object] | None = None,
     ) -> PipelineResult:
         step_results: list[PipelineStepResult] = []
         public_ids = [to_public_id(step_id) for step_id in group]
@@ -778,6 +791,7 @@ class PipelineRunner:
                     approval_status=approval_status,
                     approval_token=approval_token,
                     pause=False,
+                    session_context=session_context,
                 )
             )
             task_map[task] = offset

@@ -159,13 +159,29 @@ class CompositionEngine:
         approval_status: str | None = None,
         approval_token: str | None = None,
         charge_budget: bool = True,
+        session_context: dict[str, object] | None = None,
     ) -> object:
         stack = list(_stack or [])
         if skill_id in stack:
             raise CompositionError("Composition cycle detected")
         spec = self._store.load(skill_id)
         if not spec:
-            return self._registry._execute_entrypoint(skill_id, payload=payload)
+            metadata = self._registry.get(skill_id)
+            if not metadata:
+                raise KeyError(f"Unknown skill: {skill_id}")
+            from skillos.kernel import get_kernel
+            kernel = get_kernel(metadata, root_path=str(self._registry.root))
+            return kernel.execute(
+                metadata,
+                payload,
+                role=role,
+                attributes=attributes,
+                approval_status=approval_status,
+                approval_token=approval_token,
+                root=self._registry.root,
+                charge_budget=charge_budget,
+                session_context=session_context,
+            )
         if not spec.active and not allow_inactive:
             raise PermissionError(f"Composed skill {skill_id} is not active")
         stack.append(skill_id)
@@ -191,6 +207,7 @@ class CompositionEngine:
                     approval_status=approval_status,
                     approval_token=approval_token,
                     charge_budget=charge_budget,
+                    session_context=session_context,
                 )
             else:
                 result = self._execute_parallel_group(
@@ -207,6 +224,7 @@ class CompositionEngine:
                     approval_status=approval_status,
                     approval_token=approval_token,
                     charge_budget=charge_budget,
+                    session_context=session_context,
                 )
             order_index += len(group)
         return result
@@ -227,6 +245,7 @@ class CompositionEngine:
         approval_status: str | None,
         approval_token: str | None,
         charge_budget: bool,
+        session_context: dict[str, object] | None,
     ) -> object:
         start = time.perf_counter()
         try:
@@ -250,6 +269,7 @@ class CompositionEngine:
                 approval_status=approval_status,
                 approval_token=approval_token,
                 charge_budget=charge_budget,
+                session_context=session_context,
             )
         except CompositionBlocked as exc:
             duration_ms = (time.perf_counter() - start) * 1000
@@ -305,6 +325,7 @@ class CompositionEngine:
         approval_status: str | None,
         approval_token: str | None,
         charge_budget: bool,
+        session_context: dict[str, object] | None,
     ) -> str:
         missing = object()
         outputs: list[object] = [missing for _ in group]
@@ -336,6 +357,7 @@ class CompositionEngine:
                     approval_status,
                     approval_token,
                     charge_budget,
+                    session_context,
                 )
                 future_map[future] = (index, step_id)
 
@@ -386,6 +408,7 @@ class CompositionEngine:
         approval_status: str | None,
         approval_token: str | None,
         charge_budget: bool,
+        session_context: dict[str, object] | None,
     ) -> object:
         start = time.perf_counter()
         try:
@@ -400,6 +423,7 @@ class CompositionEngine:
                 approval_status=approval_status,
                 approval_token=approval_token,
                 charge_budget=charge_budget,
+                session_context=session_context,
             )
         finally:
             durations[index] = (time.perf_counter() - start) * 1000

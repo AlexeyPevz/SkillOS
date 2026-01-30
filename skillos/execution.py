@@ -24,6 +24,7 @@ def execute_plan(
     attributes: dict[str, object] | None = None,
     approval_status: str | None = None,
     approval_token: str | None = None,
+    session_context: dict[str, object] | None = None,
     charge_budget: bool = True,
 ) -> ExecutionResult:
     if registry.get(plan.internal_skill_id) is None:
@@ -45,6 +46,7 @@ def execute_plan(
         attributes=attributes,
         approval_status=approval_status,
         approval_token=approval_token,
+        session_context=session_context,
         charge_budget=charge_budget,
     )
     return ExecutionResult(

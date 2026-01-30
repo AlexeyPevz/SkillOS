@@ -152,16 +152,22 @@ class SkillRegistry:
     def execute(self, skill_id: str, **kwargs):
         """Synchronous execution entrypoint."""
         from skillos.composition import CompositionEngine, CompositionStore
+        from skillos.kernel import get_kernel
+
+        record = self._skills.get(skill_id)
+        if not record:
+            raise KeyError(f"Unknown skill: {skill_id}")
 
         allow_inactive = bool(kwargs.pop("allow_inactive", False))
-        payload = kwargs.get("payload", "ok")
-        role = kwargs.get("role")
-        attributes = kwargs.get("attributes")
-        approval_status = kwargs.get("approval_status")
-        approval_token = kwargs.get("approval_token")
-        charge_budget = kwargs.get("charge_budget", True)
+        payload = kwargs.pop("payload", "ok")
+        role = kwargs.pop("role", None)
+        attributes = kwargs.pop("attributes", None)
+        approval_status = kwargs.pop("approval_status", None)
+        approval_token = kwargs.pop("approval_token", None)
+        charge_budget = kwargs.pop("charge_budget", True)
+        session_context = kwargs.pop("session_context", None)
         
-        # We still support composition engine, but we need to check if it's used
+        # Composition engine check
         store = CompositionStore(self._root)
         
         with _skill_root_env(self._root):
@@ -176,44 +182,60 @@ class SkillRegistry:
                     approval_status=approval_status,
                     approval_token=approval_token,
                     charge_budget=charge_budget,
+                    session_context=session_context,
                 )
-            return self._execute_entrypoint(skill_id, payload=payload)
+            
+            kernel = get_kernel(record.metadata, root_path=str(self._root))
+            return kernel.execute(
+                record.metadata,
+                payload,
+                role=role,
+                attributes=attributes,
+                approval_status=approval_status,
+                approval_token=approval_token,
+                charge_budget=charge_budget,
+                root=self._root,
+                session_context=session_context,
+                **kwargs
+            )
 
     async def execute_async(self, skill_id: str, **kwargs):
-        """Asynchronous execution entrypoint."""
+        """Asynchronously execution entrypoint."""
         from skillos.composition import CompositionStore
+        from skillos.kernel import get_kernel
+
+        record = self._skills.get(skill_id)
+        if not record:
+            raise KeyError(f"Unknown skill: {skill_id}")
+
         store = CompositionStore(self._root)
         
         if store.exists(skill_id):
             # Fallback for composition skills (likely sync)
             return await asyncio.to_thread(self.execute, skill_id, **kwargs)
 
-        return await self._execute_entrypoint_async(skill_id, **kwargs)
+        kernel = get_kernel(record.metadata, root_path=str(self._root))
+        payload = kwargs.pop("payload", "ok")
+        role = kwargs.pop("role", None)
+        attributes = kwargs.pop("attributes", None)
+        approval_status = kwargs.pop("approval_status", None)
+        approval_token = kwargs.pop("approval_token", None)
+        charge_budget = kwargs.pop("charge_budget", True)
+        session_context = kwargs.pop("session_context", None)
 
-    def _execute_entrypoint(self, skill_id: str, **kwargs):
-        record = self._skills.get(skill_id)
-        if not record:
-            raise KeyError(f"Unknown skill: {skill_id}")
-            
-        func = resolve_entrypoint(record.metadata.entrypoint, self._root)
-        payload = kwargs.get("payload", "ok")
-        
-        if inspect.iscoroutinefunction(func):
-            return asyncio.run(_call_skill_async(func, payload))
-        return _call_skill(func, payload)
+        return await kernel.execute_async(
+            record.metadata,
+            payload,
+            role=role,
+            attributes=attributes,
+            approval_status=approval_status,
+            approval_token=approval_token,
+            charge_budget=charge_budget,
+            root=self._root,
+            session_context=session_context,
+            **kwargs
+        )
 
-    async def _execute_entrypoint_async(self, skill_id: str, **kwargs):
-        record = self._skills.get(skill_id)
-        if not record:
-            raise KeyError(f"Unknown skill: {skill_id}")
-            
-        func = resolve_entrypoint(record.metadata.entrypoint, self._root)
-        payload = kwargs.get("payload", "ok")
-
-        if inspect.iscoroutinefunction(func):
-             return await _call_skill_async(func, payload)
-        
-        return await asyncio.to_thread(_call_skill, func, payload)
 
 
 def resolve_entrypoint(entrypoint: str, root: Path | None = None) -> Any:
@@ -327,22 +349,6 @@ def _iter_skill_files(metadata_path: Path) -> Iterable[Path]:
 
 
 
-def _call_skill(func, payload: str) -> object:
-    signature = inspect.signature(func)
-    if "payload" in signature.parameters:
-        return func(payload=payload)
-    if signature.parameters:
-        return func(payload)
-    return func()
-
-
-async def _call_skill_async(func, payload: str) -> object:
-    signature = inspect.signature(func)
-    if "payload" in signature.parameters:
-        return await func(payload=payload)
-    if signature.parameters:
-        return await func(payload)
-    return await func()
 
 
 @contextmanager
