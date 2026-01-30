@@ -444,6 +444,13 @@ class JobStorePostgres:
                 ),
             )
 
+    def list_all(self) -> list[JobRecord]:
+        with pg_connect(self._dsn) as conn:
+            rows = conn.execute(
+                f"SELECT * FROM {self._schema}.jobs "
+                "WHERE tenant_id = %s ORDER BY created_at",
+                (self._tenant_id,),
+            ).fetchall()
         return [JobRecord.from_row(_pg_row_to_sqlite(row)) for row in rows]
 
     def requeue_dead_letters(self, max_retries_bump: int = 1) -> int:

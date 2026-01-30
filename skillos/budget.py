@@ -156,6 +156,7 @@ class BudgetUsageStorePostgres:
                 """
             )
 
+    @contextmanager
     def transaction(self) -> Iterator["_BudgetUsageStorePostgresTx"]:
         lock_key = _advisory_lock_key(f"{self._schema}:{self._tenant_id}")
         with pg_connect(self._dsn) as conn:
