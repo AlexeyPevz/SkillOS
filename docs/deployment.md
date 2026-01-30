@@ -52,6 +52,13 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
+## Docker (быстрый старт)
+
+```bash
+docker build -t skillos .
+docker run --rm -p 8000:8000 -v "$PWD/skills:/app/skills" skillos
+```
+
 ## Релизный минимум
 
 1. `poetry run pytest -q`

@@ -1,6 +1,18 @@
 version: "3.9"
 
 services:
+  skillos:
+    build: .
+    environment:
+      SKILLOS_ROOT: /app/skills
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./skills:/app/skills
+    depends_on:
+      - postgres
+      - redis
+
   postgres:
     image: postgres:15
     environment:

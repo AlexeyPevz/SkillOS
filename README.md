@@ -72,16 +72,43 @@ flowchart LR
   B --> G[Webhooks / Jobs / Schedules]
 ```
 
-## Быстрый старт
+## Установка
+
+Через pip (после публикации в PyPI):
+
+```bash
+python -m pip install skillos
+skillos --help
+```
+
+Через Docker:
+
+```bash
+docker build -t skillos .
+docker run --rm -p 8000:8000 -v "$PWD/skills:/app/skills" skillos
+```
+
+Dev‑установка (Poetry):
 
 ```bash
 pip install poetry
 poetry install
+```
 
+## Быстрый старт
+
+```bash
 # создать навык
-poetry run skillos add-skill travel/search_flights --root ./skills
+skillos add-skill travel/search_flights --root ./skills
 
 # запустить запрос
+skillos run "Find flights to Sochi" --root ./skills
+```
+
+Для dev‑режима можно использовать `poetry run`:
+
+```bash
+poetry run skillos add-skill travel/search_flights --root ./skills
 poetry run skillos run "Find flights to Sochi" --root ./skills
 ```
 
