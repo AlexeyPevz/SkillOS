@@ -6,6 +6,26 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 ### Added
+- Placeholder for upcoming changes.
+
+## [0.2.0] - 2026-01-30
+### Added
+- Session manager with SQLite storage, API endpoints, and session-aware orchestration.
+- Execution kernels (local) with execution_mode support and session context propagation.
+- Eval-as-code framework in YAML with matchers, limits, timeouts, and result persistence.
+- CLI command `eval-skill` and eval gating hooks for skill scaffolding.
+- API endpoint for running evals with optional result saving.
+- Session-focused tests and eval tests in CI.
+
+### Changed
+- Orchestrator and pipeline now pass `session_context` to skills.
+- Skill registry execution paths route through kernels consistently.
+- Documentation updated for SkillOS v2 proposal and walkthrough changes.
+
+### Fixed
+- Composition fallback executes via kernels instead of missing entrypoint helpers.
+- Session history saved across multi-mode execution paths.
+### Added
 - Zero-YAML SDK decorator (@skill) with auto-discovery from implementations/.
 - SkillFlow for cyclic/stateful skill execution.
 - Dev-mode convenience runner Orchestrator.run_simple.
